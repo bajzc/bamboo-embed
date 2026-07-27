@@ -131,6 +131,31 @@ def _norm_ws(s: str) -> str:
     return re.sub(r"\s+", "", s)
 
 
+# juan/篇 labels aren't formatted consistently across the corpus — most books separate
+# 卷/篇 with "‧", but some (e.g. 三國志) use full-width spaces and repeat the book title.
+# Strip whitespace and common separator punctuation before comparing so the citation
+# check only cares about the substantive 卷/篇 text, not which separator the model used.
+# Models are also inconsistent about which separator glyph they use ("‧"/"・"/"·"/"•"/
+# full-width space/none) and the citation-juan capture regex is greedy, so prose glued
+# on with no punctuation (e.g. "卷三十五的記載，" or "第五中記載了") ends up inside the
+# captured juan too. Chasing every separator variant is a losing game, so the primary
+# check below matches on the "卷<number>" substring alone — that's the one part of a
+# juan citation that's unambiguous and load-bearing; the 篇名 after it is treated as
+# free text. _norm_juan() is kept only as a fallback for sources that cite by 篇/回 name
+# without a 卷 number at all (where a normalized prefix match is the best we can do).
+_JUAN_SEP_RE = re.compile(r"[\s‧・·、•]+")
+_JUAN_NUM_RE = re.compile(r"卷[0-9一二三四五六七八九十百千萬]+")
+
+
+def _norm_juan(s: str) -> str:
+    return _JUAN_SEP_RE.sub("", s)
+
+
+def _juan_num(s: str) -> str | None:
+    m = _JUAN_NUM_RE.search(s)
+    return m.group(0) if m else None
+
+
 def validate(text: str, registry: _Registry, qopen: str, qclose: str) -> tuple[list, list]:
     """Return (bad_citations, bad_quotes); both empty means the answer is grounded."""
     if REFUSAL_NO_RETRIEVAL in text:
@@ -158,7 +183,29 @@ def validate(text: str, registry: _Registry, qopen: str, qclose: str) -> tuple[l
             # only flag a mismatch when we actually have juan ground-truth for this
             # book (dictionary sources never carry a juan, so there's nothing to
             # check them against — don't punish the model for that).
-            if known and not any(juan in k or k in juan for k in known if k):
+            cand_num = _juan_num(juan)
+            nj = _norm_juan(juan)
+            title_n = _norm_juan(canonical)
+            ok = False
+            for k in known:
+                if not k:
+                    continue
+                # primary check: the "卷<number>" itself matches — the one part of the
+                # citation that's unambiguous regardless of separator glyph or how much
+                # trailing prose the greedy capture regex pulled in after it.
+                if cand_num and cand_num == _juan_num(k):
+                    ok = True
+                    break
+                # fallback for juan labels with no 卷 number (e.g. cited by 篇/回 name
+                # only): normalized prefix match, tolerant of extra trailing junk on
+                # either side and of books that repeat their own title inside juan.
+                nk = _norm_juan(k)
+                if nk.startswith(title_n):
+                    nk = nk[len(title_n):]
+                if nj and nk and (nk.startswith(nj) or nj.startswith(nk)):
+                    ok = True
+                    break
+            if known and not ok:
                 bad_citations.append((title, juan, "juan_not_found"))
 
     pool_norm = [_norm_ws(t) for t in registry.text_pool]
