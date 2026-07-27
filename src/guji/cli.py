@@ -366,7 +366,10 @@ def ask(
                     console.print("[green]  -> passed validation[/]")
                 else:
                     for title, juan, reason in bad_citations:
-                        console.print(f"[red]  -> bad citation:[/] 《{title}》{juan} ({reason})")
+                        if reason == "hallucinated_link":
+                            console.print(f"[red]  -> hallucinated link:[/] {juan}")
+                        else:
+                            console.print(f"[red]  -> bad citation:[/] 《{title}》{juan} ({reason})")
                     for q in bad_quotes:
                         console.print(f"[red]  -> bad quote (not verbatim in retrieved text_raw):[/] {q[:60]}")
         console.print(f"[dim]attempts: {res.attempts}[/]")

@@ -156,6 +156,9 @@ def _juan_num(s: str) -> str | None:
     return m.group(0) if m else None
 
 
+_URL_RE = re.compile(r"https?://[^\s\)\]）」』，。、]+")
+
+
 def validate(text: str, registry: _Registry, qopen: str, qclose: str) -> tuple[list, list]:
     """Return (bad_citations, bad_quotes); both empty means the answer is grounded."""
     if REFUSAL_NO_RETRIEVAL in text:
@@ -165,6 +168,12 @@ def validate(text: str, registry: _Registry, qopen: str, qclose: str) -> tuple[l
     bad_citations: list[tuple[str, str, str]] = []
     if not citations:
         bad_citations.append(("", "", "no_citation"))
+    # the corpus is plain classical text with no images or links; any URL (bare, or
+    # inside markdown image syntax "![](url)") is fabricated by the model, never
+    # grounded in a retrieved passage — same "can't be verified" failure as a bad
+    # citation, so it goes through the same reject-and-retry path.
+    for url in _URL_RE.findall(text):
+        bad_citations.append(("", url, "hallucinated_link"))
     # compare book titles script-insensitively: the corpus is all-traditional, but a
     # model answering a simplified-script question may cite in simplified too.
     norm_titles = {to_norm(kt): kt for kt in registry.titles}
@@ -225,6 +234,8 @@ def _correction_message(bad_citations: list, bad_quotes: list, registry: _Regist
             lines.append("- 回答中沒有任何《書名》格式的結構化引用，必須至少引用一處。")
         elif reason == "book_not_found":
             lines.append(f"- 《{title}》不在本輪檢索結果中，禁止引用此書。")
+        elif reason == "hallucinated_link":
+            lines.append(f"- 回答中出現了連結「{juan}」，檢索到的古籍原文不含任何網址或圖片，禁止杜撰連結。")
         else:
             lines.append(f"- 《{title}》{juan} 的卷/篇名與檢索結果不符。")
     for q in bad_quotes:
