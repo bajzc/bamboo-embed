@@ -1,0 +1,1165 @@
+{
+  "books": [
+    {
+      "book_id": "axianqinlianghanpian",
+      "title": "a.先秦兩漢篇",
+      "dynasty": "",
+      "author": "",
+      "category": "詩詞",
+      "category_dir": "0.詩詞",
+      "source_files": [
+        "0.詩詞/a.先秦兩漢篇/a.先秦兩漢篇.txt"
+      ],
+      "char_count": 0,
+      "form": "poetry",
+      "is_empty": true,
+      "is_complete": false,
+      "is_stub": false,
+      "related_to": [],
+      "notes": "empty file (no content)"
+    },
+    {
+      "book_id": "bweijinpian",
+      "title": "b.魏晉篇",
+      "dynasty": "",
+      "author": "",
+      "category": "詩詞",
+      "category_dir": "0.詩詞",
+      "source_files": [
+        "0.詩詞/b.魏晉篇/b.魏晉篇.txt"
+      ],
+      "char_count": 0,
+      "form": "poetry",
+      "is_empty": true,
+      "is_complete": false,
+      "is_stub": false,
+      "related_to": [],
+      "notes": "empty file (no content)"
+    },
+    {
+      "book_id": "cnanbeichaopian",
+      "title": "c.南北朝篇",
+      "dynasty": "",
+      "author": "",
+      "category": "詩詞",
+      "category_dir": "0.詩詞",
+      "source_files": [
+        "0.詩詞/c.南北朝篇/c.南北朝篇.txt"
+      ],
+      "char_count": 0,
+      "form": "poetry",
+      "is_empty": true,
+      "is_complete": false,
+      "is_stub": false,
+      "related_to": [],
+      "notes": "empty file (no content)"
+    },
+    {
+      "book_id": "dsuitangpian",
+      "title": "d.隋唐篇",
+      "dynasty": "",
+      "author": "",
+      "category": "詩詞",
+      "category_dir": "0.詩詞",
+      "source_files": [
+        "0.詩詞/d.隋唐篇/d.隋唐篇.txt"
+      ],
+      "char_count": 0,
+      "form": "poetry",
+      "is_empty": true,
+      "is_complete": false,
+      "is_stub": false,
+      "related_to": [],
+      "notes": "empty file (no content)"
+    },
+    {
+      "book_id": "esongdaipian",
+      "title": "e.宋代篇",
+      "dynasty": "",
+      "author": "",
+      "category": "詩詞",
+      "category_dir": "0.詩詞",
+      "source_files": [
+        "0.詩詞/e.宋代篇/e.宋代篇.txt"
+      ],
+      "char_count": 0,
+      "form": "poetry",
+      "is_empty": true,
+      "is_complete": false,
+      "is_stub": false,
+      "related_to": [],
+      "notes": "empty file (no content)"
+    },
+    {
+      "book_id": "fjinyuanpian",
+      "title": "f.金元篇",
+      "dynasty": "",
+      "author": "",
+      "category": "詩詞",
+      "category_dir": "0.詩詞",
+      "source_files": [
+        "0.詩詞/f.金元篇/f.金元篇.txt"
+      ],
+      "char_count": 0,
+      "form": "poetry",
+      "is_empty": true,
+      "is_complete": false,
+      "is_stub": false,
+      "related_to": [],
+      "notes": "empty file (no content)"
+    },
+    {
+      "book_id": "gmingdaipian",
+      "title": "g.明代篇",
+      "dynasty": "",
+      "author": "",
+      "category": "詩詞",
+      "category_dir": "0.詩詞",
+      "source_files": [
+        "0.詩詞/g.明代篇/g.明代篇.txt"
+      ],
+      "char_count": 0,
+      "form": "poetry",
+      "is_empty": true,
+      "is_complete": false,
+      "is_stub": false,
+      "related_to": [],
+      "notes": "empty file (no content)"
+    },
+    {
+      "book_id": "hqingdaipian",
+      "title": "h.清代篇",
+      "dynasty": "",
+      "author": "",
+      "category": "詩詞",
+      "category_dir": "0.詩詞",
+      "source_files": [
+        "0.詩詞/h.清代篇/h.清代篇.txt"
+      ],
+      "char_count": 0,
+      "form": "poetry",
+      "is_empty": true,
+      "is_complete": false,
+      "is_stub": false,
+      "related_to": [],
+      "notes": "empty file (no content)"
+    },
+    {
+      "book_id": "shijing",
+      "title": "詩經",
+      "dynasty": "",
+      "author": "",
+      "category": "詩詞",
+      "category_dir": "0.詩詞",
+      "source_files": [
+        "0.詩詞/a.先秦兩漢篇/詩經.txt"
+      ],
+      "char_count": 50452,
+      "form": "poetry",
+      "is_empty": false,
+      "is_complete": true,
+      "is_stub": false,
+      "related_to": [
+        "shijingsymbolic"
+      ],
+      "notes": ""
+    },
+    {
+      "book_id": "zhongyong",
+      "title": "中庸",
+      "dynasty": "",
+      "author": "",
+      "category": "儒家",
+      "category_dir": "a.儒家",
+      "source_files": [
+        "a.儒家/中庸.txt"
+      ],
+      "char_count": 4699,
+      "form": "narrative",
+      "is_empty": false,
+      "is_complete": true,
+      "is_stub": false,
+      "related_to": [],
+      "notes": ""
+    },
+    {
+      "book_id": "daxue",
+      "title": "大學",
+      "dynasty": "",
+      "author": "",
+      "category": "儒家",
+      "category_dir": "a.儒家",
+      "source_files": [
+        "a.儒家/大學.txt"
+      ],
+      "char_count": 2404,
+      "form": "narrative",
+      "is_empty": false,
+      "is_complete": true,
+      "is_stub": false,
+      "related_to": [],
+      "notes": ""
+    },
+    {
+      "book_id": "kongzijiayu",
+      "title": "孔子家語",
+      "dynasty": "",
+      "author": "",
+      "category": "儒家",
+      "category_dir": "a.儒家",
+      "source_files": [
+        "a.儒家/孔子家語.txt"
+      ],
+      "char_count": 74499,
+      "form": "narrative",
+      "is_empty": false,
+      "is_complete": true,
+      "is_stub": false,
+      "related_to": [],
+      "notes": ""
+    },
+    {
+      "book_id": "mengzi",
+      "title": "孟子",
+      "dynasty": "",
+      "author": "",
+      "category": "儒家",
+      "category_dir": "a.儒家",
+      "source_files": [
+        "a.儒家/孟子.txt"
+      ],
+      "char_count": 46485,
+      "form": "narrative",
+      "is_empty": false,
+      "is_complete": true,
+      "is_stub": false,
+      "related_to": [],
+      "notes": ""
+    },
+    {
+      "book_id": "xunzi",
+      "title": "荀子",
+      "dynasty": "",
+      "author": "",
+      "category": "儒家",
+      "category_dir": "a.儒家",
+      "source_files": [
+        "a.儒家/荀子.txt"
+      ],
+      "char_count": 91897,
+      "form": "narrative",
+      "is_empty": false,
+      "is_complete": true,
+      "is_stub": false,
+      "related_to": [],
+      "notes": ""
+    },
+    {
+      "book_id": "shijingsymbolic",
+      "title": "詩經_symbolic",
+      "dynasty": "",
+      "author": "",
+      "category": "儒家",
+      "category_dir": "a.儒家",
+      "source_files": [
+        "a.儒家/詩經_symbolic.txt"
+      ],
+      "char_count": 173,
+      "form": "narrative",
+      "is_empty": false,
+      "is_complete": false,
+      "is_stub": true,
+      "related_to": [
+        "shijing"
+      ],
+      "notes": "pointer stub -> 內容見 0.詩詞/a.先秦兩漢篇/詩經.txt"
+    },
+    {
+      "book_id": "lunyu",
+      "title": "論語",
+      "dynasty": "",
+      "author": "",
+      "category": "儒家",
+      "category_dir": "a.儒家",
+      "source_files": [
+        "a.儒家/論語.txt"
+      ],
+      "char_count": 22900,
+      "form": "narrative",
+      "is_empty": false,
+      "is_complete": true,
+      "is_stub": false,
+      "related_to": [],
+      "notes": ""
+    },
+    {
+      "book_id": "liezi",
+      "title": "列子",
+      "dynasty": "",
+      "author": "",
+      "category": "道家",
+      "category_dir": "b.道家",
+      "source_files": [
+        "b.道家/列子.txt"
+      ],
+      "char_count": 38454,
+      "form": "narrative",
+      "is_empty": false,
+      "is_complete": true,
+      "is_stub": false,
+      "related_to": [],
+      "notes": ""
+    },
+    {
+      "book_id": "daodejing",
+      "title": "道德經",
+      "dynasty": "老子",
+      "author": "",
+      "category": "道家",
+      "category_dir": "b.道家",
+      "source_files": [
+        "b.道家/道德經.txt"
+      ],
+      "char_count": 7877,
+      "form": "narrative",
+      "is_empty": false,
+      "is_complete": true,
+      "is_stub": false,
+      "related_to": [],
+      "notes": ""
+    },
+    {
+      "book_id": "sanshiliuji",
+      "title": "三十六計",
+      "dynasty": "",
+      "author": "",
+      "category": "兵家",
+      "category_dir": "d.兵家",
+      "source_files": [
+        "d.兵家/三十六計.txt"
+      ],
+      "char_count": 6930,
+      "form": "narrative",
+      "is_empty": false,
+      "is_complete": true,
+      "is_stub": false,
+      "related_to": [],
+      "notes": ""
+    },
+    {
+      "book_id": "sanguozhi",
+      "title": "三國志",
+      "dynasty": "晉",
+      "author": "陳壽",
+      "category": "史書",
+      "category_dir": "j.史書",
+      "source_files": [
+        "j.史書/三國志.txt"
+      ],
+      "char_count": 867778,
+      "form": "narrative",
+      "is_empty": false,
+      "is_complete": true,
+      "is_stub": false,
+      "related_to": [],
+      "notes": ""
+    },
+    {
+      "book_id": "yuanshi",
+      "title": "元史",
+      "dynasty": "明",
+      "author": "宋濂",
+      "category": "史書",
+      "category_dir": "j.史書",
+      "source_files": [
+        "j.史書/元史.txt"
+      ],
+      "char_count": 1992397,
+      "form": "narrative",
+      "is_empty": false,
+      "is_complete": true,
+      "is_stub": false,
+      "related_to": [],
+      "notes": ""
+    },
+    {
+      "book_id": "beishi",
+      "title": "北史",
+      "dynasty": "唐",
+      "author": "李延壽",
+      "category": "史書",
+      "category_dir": "j.史書",
+      "source_files": [
+        "j.史書/北史.txt"
+      ],
+      "char_count": 1362436,
+      "form": "narrative",
+      "is_empty": false,
+      "is_complete": true,
+      "is_stub": false,
+      "related_to": [],
+      "notes": ""
+    },
+    {
+      "book_id": "beiqishu",
+      "title": "北齊書",
+      "dynasty": "唐",
+      "author": "李百藥",
+      "category": "史書",
+      "category_dir": "j.史書",
+      "source_files": [
+        "j.史書/北齊書.txt"
+      ],
+      "char_count": 262070,
+      "form": "narrative",
+      "is_empty": false,
+      "is_complete": true,
+      "is_stub": false,
+      "related_to": [],
+      "notes": ""
+    },
+    {
+      "book_id": "nanqishu",
+      "title": "南齊書",
+      "dynasty": "南朝梁",
+      "author": "蕭子顯",
+      "category": "史書",
+      "category_dir": "j.史書",
+      "source_files": [
+        "j.史書/南齊書.txt"
+      ],
+      "char_count": 353269,
+      "form": "narrative",
+      "is_empty": false,
+      "is_complete": true,
+      "is_stub": false,
+      "related_to": [],
+      "notes": ""
+    },
+    {
+      "book_id": "shiji",
+      "title": "史記",
+      "dynasty": "漢",
+      "author": "司馬遷",
+      "category": "史書",
+      "category_dir": "j.史書",
+      "source_files": [
+        "j.史書/史記.txt"
+      ],
+      "char_count": 621637,
+      "form": "narrative",
+      "is_empty": false,
+      "is_complete": true,
+      "is_stub": false,
+      "related_to": [
+        "shijisanjiazhu"
+      ],
+      "notes": ""
+    },
+    {
+      "book_id": "shijisanjiazhu",
+      "title": "史記三家注",
+      "dynasty": "漢",
+      "author": "司馬遷",
+      "category": "史書",
+      "category_dir": "j.史書",
+      "source_files": [
+        "j.史書/史記三家注.txt"
+      ],
+      "char_count": 1279362,
+      "form": "narrative",
+      "is_empty": false,
+      "is_complete": true,
+      "is_stub": false,
+      "related_to": [
+        "shiji"
+      ],
+      "notes": ""
+    },
+    {
+      "book_id": "songshu",
+      "title": "宋書",
+      "dynasty": "南朝梁",
+      "author": "沈約",
+      "category": "史書",
+      "category_dir": "j.史書",
+      "source_files": [
+        "j.史書/宋書.txt"
+      ],
+      "char_count": 1003506,
+      "form": "narrative",
+      "is_empty": false,
+      "is_complete": true,
+      "is_stub": false,
+      "related_to": [],
+      "notes": ""
+    },
+    {
+      "book_id": "xintangshu",
+      "title": "新唐書",
+      "dynasty": "北宋",
+      "author": "歐陽修、宋祁、范鎮、呂夏卿等",
+      "category": "史書",
+      "category_dir": "j.史書",
+      "source_files": [
+        "j.史書/新唐書.txt"
+      ],
+      "char_count": 2290174,
+      "form": "narrative",
+      "is_empty": false,
+      "is_complete": true,
+      "is_stub": false,
+      "related_to": [],
+      "notes": ""
+    },
+    {
+      "book_id": "jinshu",
+      "title": "晉書",
+      "dynasty": "唐",
+      "author": "房玄齡、褚遂良等",
+      "category": "史書",
+      "category_dir": "j.史書",
+      "source_files": [
+        "j.史書/晉書.txt"
+      ],
+      "char_count": 1429732,
+      "form": "narrative",
+      "is_empty": false,
+      "is_complete": true,
+      "is_stub": false,
+      "related_to": [],
+      "notes": ""
+    },
+    {
+      "book_id": "liangshu",
+      "title": "梁書",
+      "dynasty": "唐",
+      "author": "姚思廉",
+      "category": "史書",
+      "category_dir": "j.史書",
+      "source_files": [
+        "j.史書/梁書.txt"
+      ],
+      "char_count": 362379,
+      "form": "narrative",
+      "is_empty": false,
+      "is_complete": true,
+      "is_stub": false,
+      "related_to": [],
+      "notes": ""
+    },
+    {
+      "book_id": "hanshu",
+      "title": "漢書",
+      "dynasty": "東漢",
+      "author": "班固",
+      "category": "史書",
+      "category_dir": "j.史書",
+      "source_files": [
+        "j.史書/漢書.txt"
+      ],
+      "char_count": 1812186,
+      "form": "narrative",
+      "is_empty": false,
+      "is_complete": true,
+      "is_stub": false,
+      "related_to": [],
+      "notes": ""
+    },
+    {
+      "book_id": "jiutangshu",
+      "title": "舊唐書",
+      "dynasty": "後晉",
+      "author": "劉昫",
+      "category": "史書",
+      "category_dir": "j.史書",
+      "source_files": [
+        "j.史書/舊唐書.txt"
+      ],
+      "char_count": 2440989,
+      "form": "narrative",
+      "is_empty": false,
+      "is_complete": true,
+      "is_stub": false,
+      "related_to": [],
+      "notes": ""
+    },
+    {
+      "book_id": "chenshu",
+      "title": "陳書",
+      "dynasty": "唐",
+      "author": "姚思廉",
+      "category": "史書",
+      "category_dir": "j.史書",
+      "source_files": [
+        "j.史書/陳書.txt"
+      ],
+      "char_count": 199751,
+      "form": "narrative",
+      "is_empty": false,
+      "is_complete": true,
+      "is_stub": false,
+      "related_to": [],
+      "notes": ""
+    },
+    {
+      "book_id": "suishu",
+      "title": "隋書",
+      "dynasty": "唐",
+      "author": "魏徵",
+      "category": "史書",
+      "category_dir": "j.史書",
+      "source_files": [
+        "j.史書/隋書.txt"
+      ],
+      "char_count": 868533,
+      "form": "narrative",
+      "is_empty": false,
+      "is_complete": true,
+      "is_stub": false,
+      "related_to": [],
+      "notes": ""
+    },
+    {
+      "book_id": "weishu",
+      "title": "魏書",
+      "dynasty": "北齊",
+      "author": "魏收",
+      "category": "史書",
+      "category_dir": "j.史書",
+      "source_files": [
+        "j.史書/魏書.txt"
+      ],
+      "char_count": 1229045,
+      "form": "narrative",
+      "is_empty": false,
+      "is_complete": true,
+      "is_stub": false,
+      "related_to": [],
+      "notes": ""
+    },
+    {
+      "book_id": "liuzutanjing",
+      "title": "六祖壇經",
+      "dynasty": "唐",
+      "author": "慧能",
+      "category": "佛教",
+      "category_dir": "l.佛教",
+      "source_files": [
+        "l.佛教/六祖壇經.txt"
+      ],
+      "char_count": 24660,
+      "form": "narrative",
+      "is_empty": false,
+      "is_complete": true,
+      "is_stub": false,
+      "related_to": [],
+      "notes": ""
+    },
+    {
+      "book_id": "boreboluomiduoxinjing",
+      "title": "般若波羅蜜多心經",
+      "dynasty": "唐",
+      "author": "玄奘",
+      "category": "佛教",
+      "category_dir": "l.佛教",
+      "source_files": [
+        "l.佛教/般若波羅蜜多心經.txt"
+      ],
+      "char_count": 861,
+      "form": "narrative",
+      "is_empty": false,
+      "is_complete": true,
+      "is_stub": false,
+      "related_to": [],
+      "notes": ""
+    },
+    {
+      "book_id": "jingangjing",
+      "title": "金剛經",
+      "dynasty": "姚秦",
+      "author": "鳩摩羅什",
+      "category": "佛教",
+      "category_dir": "l.佛教",
+      "source_files": [
+        "l.佛教/金剛經.txt"
+      ],
+      "char_count": 7154,
+      "form": "narrative",
+      "is_empty": false,
+      "is_complete": true,
+      "is_stub": false,
+      "related_to": [],
+      "notes": ""
+    },
+    {
+      "book_id": "yiqiejingyinyi",
+      "title": "一切經音義",
+      "dynasty": "唐",
+      "author": "翻經沙門 玄應",
+      "category": "字書訓詁",
+      "category_dir": "m.字書訓詁",
+      "source_files": [
+        "m.字書訓詁/一切經音義.txt"
+      ],
+      "char_count": 401272,
+      "form": "dictionary",
+      "is_empty": false,
+      "is_complete": true,
+      "is_stub": false,
+      "related_to": [],
+      "notes": ""
+    },
+    {
+      "book_id": "wujingwenzi",
+      "title": "五經文字",
+      "dynasty": "唐",
+      "author": "張參",
+      "category": "字書訓詁",
+      "category_dir": "m.字書訓詁",
+      "source_files": [
+        "m.字書訓詁/五經文字.txt"
+      ],
+      "char_count": 56913,
+      "form": "dictionary",
+      "is_empty": false,
+      "is_complete": true,
+      "is_stub": false,
+      "related_to": [],
+      "notes": ""
+    },
+    {
+      "book_id": "daguangyihuiyupian",
+      "title": "大廣益會玉篇",
+      "dynasty": "南朝梁",
+      "author": "顾野王",
+      "category": "字書訓詁",
+      "category_dir": "m.字書訓詁",
+      "source_files": [
+        "m.字書訓詁/大廣益會玉篇.txt"
+      ],
+      "char_count": 319948,
+      "form": "dictionary",
+      "is_empty": false,
+      "is_complete": true,
+      "is_stub": false,
+      "related_to": [],
+      "notes": ""
+    },
+    {
+      "book_id": "kangxizidian",
+      "title": "康熙字典",
+      "dynasty": "清",
+      "author": "張玉書、陳廷敬等",
+      "category": "字書訓詁",
+      "category_dir": "m.字書訓詁",
+      "source_files": [
+        "m.字書訓詁/康熙字典_p1.txt",
+        "m.字書訓詁/康熙字典_p2.txt"
+      ],
+      "char_count": 4072566,
+      "form": "dictionary",
+      "is_empty": false,
+      "is_complete": true,
+      "is_stub": false,
+      "related_to": [],
+      "notes": ""
+    },
+    {
+      "book_id": "shuowenjiezi",
+      "title": "說文解字",
+      "dynasty": "漢",
+      "author": "許慎",
+      "category": "字書訓詁",
+      "category_dir": "m.字書訓詁",
+      "source_files": [
+        "m.字書訓詁/說文解字.txt"
+      ],
+      "char_count": 2476080,
+      "form": "dictionary",
+      "is_empty": false,
+      "is_complete": true,
+      "is_stub": false,
+      "related_to": [],
+      "notes": ""
+    },
+    {
+      "book_id": "sanzijing",
+      "title": "三字經",
+      "dynasty": "",
+      "author": "",
+      "category": "蒙學",
+      "category_dir": "n.蒙學",
+      "source_files": [
+        "n.蒙學/三字經.txt"
+      ],
+      "char_count": 2174,
+      "form": "poetry",
+      "is_empty": false,
+      "is_complete": true,
+      "is_stub": false,
+      "related_to": [],
+      "notes": ""
+    },
+    {
+      "book_id": "wuzijian",
+      "title": "五字鑒",
+      "dynasty": "明",
+      "author": "李廷機",
+      "category": "蒙學",
+      "category_dir": "n.蒙學",
+      "source_files": [
+        "n.蒙學/五字鑒.txt"
+      ],
+      "char_count": 12524,
+      "form": "poetry",
+      "is_empty": false,
+      "is_complete": true,
+      "is_stub": false,
+      "related_to": [],
+      "notes": ""
+    },
+    {
+      "book_id": "qianziwen",
+      "title": "千字文",
+      "dynasty": "梁",
+      "author": "敕員外散騎侍郎 周興嗣",
+      "category": "蒙學",
+      "category_dir": "n.蒙學",
+      "source_files": [
+        "n.蒙學/千字文.txt"
+      ],
+      "char_count": 1778,
+      "form": "poetry",
+      "is_empty": false,
+      "is_complete": true,
+      "is_stub": false,
+      "related_to": [],
+      "notes": ""
+    },
+    {
+      "book_id": "qianjiashi",
+      "title": "千家詩",
+      "dynasty": "",
+      "author": "",
+      "category": "蒙學",
+      "category_dir": "n.蒙學",
+      "source_files": [
+        "n.蒙學/千家詩.txt"
+      ],
+      "char_count": 14350,
+      "form": "poetry",
+      "is_empty": false,
+      "is_complete": true,
+      "is_stub": false,
+      "related_to": [],
+      "notes": ""
+    },
+    {
+      "book_id": "tangshisanbaishou",
+      "title": "唐詩三百首",
+      "dynasty": "清",
+      "author": "蘅塘退士 孫洙",
+      "category": "蒙學",
+      "category_dir": "n.蒙學",
+      "source_files": [
+        "n.蒙學/唐詩三百首.txt"
+      ],
+      "char_count": 30942,
+      "form": "poetry",
+      "is_empty": false,
+      "is_complete": true,
+      "is_stub": false,
+      "related_to": [],
+      "notes": ""
+    },
+    {
+      "book_id": "zengguangxianwen",
+      "title": "增廣賢文",
+      "dynasty": "",
+      "author": "",
+      "category": "蒙學",
+      "category_dir": "n.蒙學",
+      "source_files": [
+        "n.蒙學/增廣賢文.txt"
+      ],
+      "char_count": 10904,
+      "form": "poetry",
+      "is_empty": false,
+      "is_complete": true,
+      "is_stub": false,
+      "related_to": [],
+      "notes": ""
+    },
+    {
+      "book_id": "songcisanbaishou",
+      "title": "宋詞三百首",
+      "dynasty": "",
+      "author": "",
+      "category": "蒙學",
+      "category_dir": "n.蒙學",
+      "source_files": [
+        "n.蒙學/宋詞三百首.txt"
+      ],
+      "char_count": 37881,
+      "form": "poetry",
+      "is_empty": false,
+      "is_complete": true,
+      "is_stub": false,
+      "related_to": [],
+      "notes": ""
+    },
+    {
+      "book_id": "youxueqionglin",
+      "title": "幼學瓊林",
+      "dynasty": "明",
+      "author": "程登吉",
+      "category": "蒙學",
+      "category_dir": "n.蒙學",
+      "source_files": [
+        "n.蒙學/幼學瓊林.txt"
+      ],
+      "char_count": 22655,
+      "form": "poetry",
+      "is_empty": false,
+      "is_complete": true,
+      "is_stub": false,
+      "related_to": [],
+      "notes": ""
+    },
+    {
+      "book_id": "dizigui",
+      "title": "弟子規",
+      "dynasty": "",
+      "author": "",
+      "category": "蒙學",
+      "category_dir": "n.蒙學",
+      "source_files": [
+        "n.蒙學/弟子規.txt"
+      ],
+      "char_count": 1756,
+      "form": "poetry",
+      "is_empty": false,
+      "is_complete": true,
+      "is_stub": false,
+      "related_to": [],
+      "notes": ""
+    },
+    {
+      "book_id": "jijiuzhang",
+      "title": "急就章",
+      "dynasty": "漢",
+      "author": "史游",
+      "category": "蒙學",
+      "category_dir": "n.蒙學",
+      "source_files": [
+        "n.蒙學/急就章.txt"
+      ],
+      "char_count": 3476,
+      "form": "poetry",
+      "is_empty": false,
+      "is_complete": true,
+      "is_stub": false,
+      "related_to": [],
+      "notes": ""
+    },
+    {
+      "book_id": "zhuzijiaxun",
+      "title": "朱子家訓",
+      "dynasty": "明末清初",
+      "author": "朱用純",
+      "category": "蒙學",
+      "category_dir": "n.蒙學",
+      "source_files": [
+        "n.蒙學/朱子家訓.txt"
+      ],
+      "char_count": 872,
+      "form": "poetry",
+      "is_empty": false,
+      "is_complete": true,
+      "is_stub": false,
+      "related_to": [],
+      "notes": ""
+    },
+    {
+      "book_id": "lishimengqiu",
+      "title": "李氏蒙求",
+      "dynasty": "唐",
+      "author": "李瀚",
+      "category": "蒙學",
+      "category_dir": "n.蒙學",
+      "source_files": [
+        "n.蒙學/李氏蒙求.txt"
+      ],
+      "char_count": 3465,
+      "form": "poetry",
+      "is_empty": false,
+      "is_complete": true,
+      "is_stub": false,
+      "related_to": [],
+      "notes": ""
+    },
+    {
+      "book_id": "baijiaxing",
+      "title": "百家姓",
+      "dynasty": "",
+      "author": "",
+      "category": "蒙學",
+      "category_dir": "n.蒙學",
+      "source_files": [
+        "n.蒙學/百家姓.txt"
+      ],
+      "char_count": 949,
+      "form": "poetry",
+      "is_empty": false,
+      "is_complete": true,
+      "is_stub": false,
+      "related_to": [],
+      "notes": ""
+    },
+    {
+      "book_id": "liwengduiyun",
+      "title": "笠翁對韻",
+      "dynasty": "清",
+      "author": "李渔",
+      "category": "蒙學",
+      "category_dir": "n.蒙學",
+      "source_files": [
+        "n.蒙學/笠翁對韻.txt"
+      ],
+      "char_count": 9246,
+      "form": "poetry",
+      "is_empty": false,
+      "is_complete": true,
+      "is_stub": false,
+      "related_to": [],
+      "notes": ""
+    },
+    {
+      "book_id": "shenglvqimeng",
+      "title": "聲律啟蒙",
+      "dynasty": "清",
+      "author": "車萬育",
+      "category": "蒙學",
+      "category_dir": "n.蒙學",
+      "source_files": [
+        "n.蒙學/聲律啟蒙.txt"
+      ],
+      "char_count": 9100,
+      "form": "poetry",
+      "is_empty": false,
+      "is_complete": true,
+      "is_stub": false,
+      "related_to": [],
+      "notes": ""
+    },
+    {
+      "book_id": "longwenbianying",
+      "title": "龍文鞭影",
+      "dynasty": "明",
+      "author": "蕭良有",
+      "category": "蒙學",
+      "category_dir": "n.蒙學",
+      "source_files": [
+        "n.蒙學/龍文鞭影.txt"
+      ],
+      "char_count": 6260,
+      "form": "poetry",
+      "is_empty": false,
+      "is_complete": true,
+      "is_stub": false,
+      "related_to": [],
+      "notes": ""
+    },
+    {
+      "book_id": "sanguoyanyi",
+      "title": "三國演義",
+      "dynasty": "明",
+      "author": "羅貫中",
+      "category": "小說",
+      "category_dir": "x.小說",
+      "source_files": [
+        "x.小說/三國演義.txt"
+      ],
+      "char_count": 620957,
+      "form": "narrative",
+      "is_empty": false,
+      "is_complete": true,
+      "is_stub": false,
+      "related_to": [],
+      "notes": ""
+    },
+    {
+      "book_id": "shishuoxinyu",
+      "title": "世說新語",
+      "dynasty": "南朝宋",
+      "author": "劉義慶",
+      "category": "小說",
+      "category_dir": "x.小說",
+      "source_files": [
+        "x.小說/世說新語.txt"
+      ],
+      "char_count": 85154,
+      "form": "narrative",
+      "is_empty": false,
+      "is_complete": true,
+      "is_stub": false,
+      "related_to": [],
+      "notes": ""
+    },
+    {
+      "book_id": "xiyouji",
+      "title": "西遊記",
+      "dynasty": "明",
+      "author": "吳承恩",
+      "category": "小說",
+      "category_dir": "x.小說",
+      "source_files": [
+        "x.小說/西遊記.txt"
+      ],
+      "char_count": 763851,
+      "form": "narrative",
+      "is_empty": false,
+      "is_complete": true,
+      "is_stub": false,
+      "related_to": [],
+      "notes": ""
+    },
+    {
+      "book_id": "xiaofu",
+      "title": "笑府",
+      "dynasty": "明",
+      "author": "馮夢龍",
+      "category": "其他",
+      "category_dir": "z.其他",
+      "source_files": [
+        "z.其他/笑府.txt"
+      ],
+      "char_count": 62494,
+      "form": "narrative",
+      "is_empty": false,
+      "is_complete": true,
+      "is_stub": false,
+      "related_to": [],
+      "notes": ""
+    },
+    {
+      "book_id": "xiaolinguangji",
+      "title": "笑林廣記",
+      "dynasty": "清",
+      "author": "游戲主人",
+      "category": "其他",
+      "category_dir": "z.其他",
+      "source_files": [
+        "z.其他/笑林廣記.txt"
+      ],
+      "char_count": 82920,
+      "form": "narrative",
+      "is_empty": false,
+      "is_complete": true,
+      "is_stub": false,
+      "related_to": [],
+      "notes": ""
+    }
+  ]
+}
