@@ -1,0 +1,88 @@
+# guji-rag configuration. Code reads models/paths ONLY from here (+ env vars).
+# Dev uses cloud (qwen-max) for the LLM parts (HyDE, later generation); switch to
+# `local` for a fully offline run once a local LLM is pulled in Ollama.
+profile: cloud            # local | cloud
+
+providers:
+  cloud:
+    llm:
+      base_url: https://dashscope.aliyuncs.com/compatible-mode/v1
+      model: qwen-max
+      api_key_env: DASHSCOPE_API_KEY
+  local:
+    llm:
+      base_url: http://localhost:11434/v1     # ollama (OpenAI-compatible)
+      model: qwen3.5:9b
+      api_key_env: null
+
+# ⚠️ embedding never participates in profile switching — always local.
+# Backend is Ollama (cross-platform: identical vectors on Linux dev + macOS deploy),
+# replacing the spec's MLX backend. Never build the index with cloud text-embedding-v4.
+embedding:
+  backend: ollama
+  base_url: http://localhost:11434
+  model: qwen3-embedding:0.6b
+  dim: 1024
+  # instruction prepended to QUERIES only (not documents) — Qwen3-Embedding supports it
+  query_instruct: "給定一個關於中國古代典籍的問題，檢索相關的文言原文段落"
+# Rerank is a separate cross-encoder call. DashScope's endpoint is NOT OpenAI-compatible,
+# so it has its own adapter (§2.1). `none` = skip rerank (RRF order kept).
+rerank:
+  backend: dashscope                # dashscope | none
+  model: qwen3-rerank
+  base_url: https://dashscope.aliyuncs.com/api/v1/services/rerank/text-rerank/text-rerank
+  api_key_env: DASHSCOPE_API_KEY
+  threshold: 0.35                   # top rerank score below this -> 未檢索到相關記載
+
+# HyDE: LLM writes a hypothetical 文言文 passage, which is embedded for the dense path
+# to bridge the modern-query vs classical-document gap (§4.1). Toggle with --hyde/--no-hyde.
+hyde:
+  enabled: false
+  max_tokens: 256
+
+# Collapse near-duplicate hits from related books (史記 vs 史記三家注, §3.3).
+dedup:
+  enabled: true
+  jaccard: 0.7
+
+# Corpus source + on-disk artifact locations (all relative to repo root).
+corpus:
+  repo_url: https://github.com/JasonWade001/chtxt
+  raw_dir: data/raw/chtxt
+
+paths:
+  data_dir: data
+  manifest: data/manifest.json
+  passages: data/passages.jsonl
+  dict_db: data/dict.sqlite
+  pua_map: data/pua_map.json
+  char_report: data/char_report.json
+  lancedb: data/lancedb            # vector store directory
+  fts_db: data/fts.sqlite          # FTS5 sparse index
+  eval_questions: eval/questions.jsonl
+  eval_report_dir: eval/report
+
+# Chunking parameters (§5.4).
+chunk:
+  narrative_min_chars: 250
+  narrative_max_chars: 400
+  overlap_paragraphs: 1
+
+# Retrieval parameters (§4.1). RRF fusion — no linear weights to tune.
+retrieve:
+  dense_k: 50          # candidates from the vector path
+  sparse_k: 50         # candidates from the FTS5 path
+  rrf_k: 60            # RRF constant
+  fuse_k: 50           # kept after fusion (fed to rerank in Phase 3)
+  top_k: 8             # returned to the user / LLM
+
+# Generation (§4.2). Three hard constraints enforced in code, not just prompted:
+# structured citations must reference this turn's retrieved metadata, quotes (wrapped
+# in quote_open/quote_close) must be verbatim, and the rerank threshold gate (above)
+# skips generation entirely on a weak retrieval.
+generate:
+  max_tokens: 1024
+  max_tool_rounds: 4
+  retry_on_violation: 1
+  quote_open: "『"
+  quote_close: "』"
