@@ -302,6 +302,11 @@ def ask(
     category: str = typer.Option(None, "--category"),
     hyde: bool = typer.Option(None, "--hyde/--no-hyde", help="default from config"),
     rerank: bool = typer.Option(True, "--rerank/--no-rerank"),
+    validate: bool = typer.Option(
+        None, "--validate/--no-validate",
+        help="citation/quote/link validation + reject-and-retry; default from config. "
+             "--no-validate returns the model's first answer as-is, ungrounded.",
+    ),
     debug: bool = typer.Option(False, "--debug", help="show tool calls + retry attempts"),
 ):
     """Citation-grounded Q&A: retrieval + LLM function-calling, verbatim quotes only.
@@ -314,7 +319,7 @@ def ask(
     cfg = load_config()
     res = generate.answer(
         cfg, query, book=book, dynasty=dynasty, category=category,
-        use_hyde=hyde, use_rerank=rerank,
+        use_hyde=hyde, use_rerank=rerank, validate_answer=validate,
     )
 
     if debug:

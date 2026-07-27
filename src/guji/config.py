@@ -88,6 +88,7 @@ class GenerateCfg(BaseModel):
     retry_on_violation: int = 1       # re-prompt attempts when citations/quotes fail validation
     quote_open: str = "『"            # verbatim-quote delimiters (§4.2 constraint 2)
     quote_close: str = "』"
+    validate_citations: bool = True   # citation/quote/link validation + reject-and-retry (§4.2)
 
 
 class Config(BaseModel):

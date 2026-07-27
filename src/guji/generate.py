@@ -253,6 +253,7 @@ def answer(
     category: str | None = None,
     use_hyde: bool | None = None,
     use_rerank: bool = True,
+    validate_answer: bool | None = None,
 ) -> AnswerResult:
     primary = hybrid.search(
         cfg, query, book=book, dynasty=dynasty, category=category,
@@ -295,6 +296,20 @@ def answer(
     tool_calls_log: list[ToolCallLog] = []
     answer_attempts: list[str] = []
     attempt_violations: list[tuple[list, list]] = []
+
+    do_validate = cfg.generate.validate_citations if validate_answer is None else validate_answer
+    if not do_validate:
+        # skip citation/quote/link validation and the reject-and-retry loop entirely —
+        # whatever the model says on its first pass is returned as-is, ungrounded.
+        final_text = _converse(client, llm.model, messages, cfg, registry, tool_calls_log)
+        return AnswerResult(
+            text=final_text, attempts=1, tool_calls=tool_calls_log,
+            hyde_text=primary.hyde_text,
+            citations=extract_citations(final_text),
+            quotes=extract_quotes(final_text, cfg.generate.quote_open, cfg.generate.quote_close),
+            retrieved=seed_rows, messages=list(messages), answer_attempts=[final_text],
+        )
+
     max_retries = cfg.generate.retry_on_violation
     attempts = 0
     final_text = ""

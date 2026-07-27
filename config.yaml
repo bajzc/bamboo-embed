@@ -86,3 +86,4 @@ generate:
   retry_on_violation: 1
   quote_open: "『"
   quote_close: "』"
+  validate_citations: false   # set false (or `ask --no-validate`) to skip the reject-and-retry gate
