@@ -1,0 +1,80 @@
+{"id": "zi01", "category": "字词训诂", "question": "「敝」在《說文解字》中如何解釋？", "gold_books": ["說文解字"], "gold_keywords": ["敝"]}
+{"id": "zi02", "category": "字词训诂", "question": "「仁」在《說文解字》中如何解釋？", "gold_books": ["說文解字"], "gold_keywords": ["仁"]}
+{"id": "zi03", "category": "字词训诂", "question": "「禮」在《大廣益會玉篇》中如何解釋？", "gold_books": ["大廣益會玉篇"], "gold_keywords": ["禮"]}
+{"id": "zi04", "category": "字词训诂", "question": "「道」在《說文解字》中如何解釋？", "gold_books": ["說文解字"], "gold_keywords": ["道"]}
+{"id": "zi05", "category": "字词训诂", "question": "「德」在《康熙字典》中如何解釋？", "gold_books": ["康熙字典"], "gold_keywords": ["德"]}
+{"id": "zi06", "category": "字词训诂", "question": "「學」在《說文解字》中如何解釋？", "gold_books": ["說文解字"], "gold_keywords": ["學"]}
+{"id": "zi07", "category": "字词训诂", "question": "「之」在《康熙字典》中如何解釋？", "gold_books": ["康熙字典"], "gold_keywords": ["之"]}
+{"id": "zi08", "category": "字词训诂", "question": "「也」在《說文解字》中如何解釋？", "gold_books": ["說文解字"], "gold_keywords": ["也"]}
+{"id": "zi09", "category": "字词训诂", "question": "「命」在《說文解字》中如何解釋？", "gold_books": ["說文解字"], "gold_keywords": ["命"]}
+{"id": "zi10", "category": "字词训诂", "question": "「天」在《大廣益會玉篇》中如何解釋？", "gold_books": ["大廣益會玉篇"], "gold_keywords": ["天"]}
+{"id": "zi11", "category": "字词训诂", "question": "「地」在《大廣益會玉篇》中如何解釋？", "gold_books": ["大廣益會玉篇"], "gold_keywords": ["地"]}
+{"id": "zi12", "category": "字词训诂", "question": "「人」在《五經文字》中如何解釋？", "gold_books": ["五經文字"], "gold_keywords": ["人"]}
+{"id": "zi13", "category": "字词训诂", "question": "「心」在《五經文字》中如何解釋？", "gold_books": ["五經文字"], "gold_keywords": ["心"]}
+{"id": "zi14", "category": "字词训诂", "question": "「信」在《康熙字典》中如何解釋？", "gold_books": ["康熙字典"], "gold_keywords": ["信"]}
+{"id": "zi15", "category": "字词训诂", "question": "「義」在《大廣益會玉篇》中如何解釋？", "gold_books": ["大廣益會玉篇"], "gold_keywords": ["義"]}
+{"id": "zi16", "category": "字词训诂", "question": "「國」在《說文解字》中如何解釋？", "gold_books": ["說文解字"], "gold_keywords": ["國"]}
+{"id": "zi17", "category": "字词训诂", "question": "「文」在《大廣益會玉篇》中如何解釋？", "gold_books": ["大廣益會玉篇"], "gold_keywords": ["文"]}
+{"id": "zi18", "category": "字词训诂", "question": "「武」在《康熙字典》中如何解釋？", "gold_books": ["康熙字典"], "gold_keywords": ["武"]}
+{"id": "zi19", "category": "字词训诂", "question": "「孝」在《大廣益會玉篇》中如何解釋？", "gold_books": ["大廣益會玉篇"], "gold_keywords": ["孝"]}
+{"id": "zi20", "category": "字词训诂", "question": "「三昧」在《一切經音義》中如何解釋？", "gold_books": ["一切經音義"], "gold_keywords": ["三昧"]}
+{"id": "re01", "category": "人物事件", "question": "荊軻刺秦王的經過是怎樣的？", "gold_books": ["史記"], "gold_keywords": ["荊軻"]}
+{"id": "re02", "category": "人物事件", "question": "鴻門宴上發生了什麼事？", "gold_books": ["史記"], "gold_keywords": ["鴻門"]}
+{"id": "re03", "category": "人物事件", "question": "商鞅在秦國推行了哪些變法？", "gold_books": ["史記"], "gold_keywords": ["商鞅"]}
+{"id": "re04", "category": "人物事件", "question": "《史記三家注》中黃帝的事跡有哪些記載？", "gold_books": ["史記三家注"], "gold_keywords": ["黃帝"]}
+{"id": "re05", "category": "人物事件", "question": "蘇武在漢書中的事跡是怎樣記載的？", "gold_books": ["漢書"], "gold_keywords": ["蘇武"]}
+{"id": "re06", "category": "人物事件", "question": "霍光輔政的記載是怎樣的？", "gold_books": ["漢書"], "gold_keywords": ["霍光"]}
+{"id": "re07", "category": "人物事件", "question": "赤壁之戰的經過是怎樣的？", "gold_books": ["三國志"], "gold_keywords": ["赤壁"]}
+{"id": "re08", "category": "人物事件", "question": "諸葛亮的事跡在三國志中有哪些記載？", "gold_books": ["三國志"], "gold_keywords": ["諸葛亮"]}
+{"id": "re09", "category": "人物事件", "question": "曹操早年的經歷是怎樣的？", "gold_books": ["三國志"], "gold_keywords": ["曹操"]}
+{"id": "re10", "category": "人物事件", "question": "淝水之戰的經過是怎樣的？", "gold_books": ["晉書"], "gold_keywords": ["淝水"]}
+{"id": "re11", "category": "人物事件", "question": "王羲之的生平事跡有哪些記載？", "gold_books": ["晉書"], "gold_keywords": ["王羲之"]}
+{"id": "re12", "category": "人物事件", "question": "劉裕的事跡在宋書中是怎樣記載的？", "gold_books": ["宋書"], "gold_keywords": ["劉裕"]}
+{"id": "re13", "category": "人物事件", "question": "蕭道成的事跡在南齊書中是怎樣記載的？", "gold_books": ["南齊書"], "gold_keywords": ["蕭道成"]}
+{"id": "re14", "category": "人物事件", "question": "梁武帝（高祖）的事跡有哪些記載？", "gold_books": ["梁書"], "gold_keywords": ["高祖"]}
+{"id": "re15", "category": "人物事件", "question": "陳朝高祖的事跡有哪些記載？", "gold_books": ["陳書"], "gold_keywords": ["高祖"]}
+{"id": "re16", "category": "人物事件", "question": "北魏孝文帝推行了哪些改革？", "gold_books": ["魏書"], "gold_keywords": ["孝文"]}
+{"id": "re17", "category": "人物事件", "question": "北魏道武帝（太祖）建國的經過是怎樣的？", "gold_books": ["魏書"], "gold_keywords": ["太祖"]}
+{"id": "re18", "category": "人物事件", "question": "高歡（神武）的事跡有哪些記載？", "gold_books": ["北齊書"], "gold_keywords": ["神武"]}
+{"id": "re19", "category": "人物事件", "question": "北魏孝文帝在北史中的記載是怎樣的？", "gold_books": ["北史"], "gold_keywords": ["孝文"]}
+{"id": "re20", "category": "人物事件", "question": "隋文帝楊堅的事跡有哪些記載？", "gold_books": ["隋書"], "gold_keywords": ["楊堅"]}
+{"id": "re21", "category": "人物事件", "question": "隋煬帝的事跡有哪些記載？", "gold_books": ["隋書"], "gold_keywords": ["煬帝"]}
+{"id": "re22", "category": "人物事件", "question": "安祿山之亂的經過是怎樣的？", "gold_books": ["舊唐書"], "gold_keywords": ["安祿山"]}
+{"id": "re23", "category": "人物事件", "question": "安祿山之亂在新唐書中是怎樣記載的？", "gold_books": ["新唐書"], "gold_keywords": ["安祿山"]}
+{"id": "re24", "category": "人物事件", "question": "則天皇后（武則天）的事跡有哪些記載？", "gold_books": ["舊唐書"], "gold_keywords": ["則天"]}
+{"id": "re25", "category": "人物事件", "question": "貞觀年間有哪些重要施政記載？", "gold_books": ["新唐書"], "gold_keywords": ["貞觀"]}
+{"id": "re26", "category": "人物事件", "question": "忽必烈的事跡有哪些記載？", "gold_books": ["元史"], "gold_keywords": ["忽必烈"]}
+{"id": "re27", "category": "人物事件", "question": "成吉思汗的事跡有哪些記載？", "gold_books": ["元史"], "gold_keywords": ["成吉思"]}
+{"id": "re28", "category": "人物事件", "question": "孔子對「仁」的論述有哪些？", "gold_books": ["論語"], "gold_keywords": ["仁"]}
+{"id": "re29", "category": "人物事件", "question": "孟子對「性善」的論述是怎樣的？", "gold_books": ["孟子"], "gold_keywords": ["性善"]}
+{"id": "re30", "category": "人物事件", "question": "曹操「望梅止渴」的故事是怎樣記載的？", "gold_books": ["世說新語"], "gold_keywords": ["大梅林"]}
+{"id": "al01", "category": "典故出处", "question": "「克己復禮」出自哪裡？原文是什麼？", "gold_books": ["論語"], "gold_keywords": ["克己復禮"]}
+{"id": "al02", "category": "典故出处", "question": "「學而時習之」出自哪裡？", "gold_books": ["論語"], "gold_keywords": ["學而時習之"]}
+{"id": "al03", "category": "典故出处", "question": "「三人行必有我師」出自哪裡？", "gold_books": ["論語"], "gold_keywords": ["必有我師"]}
+{"id": "al04", "category": "典故出处", "question": "「溫故知新」出自哪裡？", "gold_books": ["論語"], "gold_keywords": ["溫故", "知新"]}
+{"id": "al05", "category": "典故出处", "question": "「見賢思齊」出自哪裡？", "gold_books": ["論語"], "gold_keywords": ["見賢思齊"]}
+{"id": "al06", "category": "典故出处", "question": "「不恥下問」出自哪裡？", "gold_books": ["論語"], "gold_keywords": ["不恥下問"]}
+{"id": "al07", "category": "典故出处", "question": "「己所不欲，勿施於人」出自哪裡？", "gold_books": ["論語"], "gold_keywords": ["己所不欲", "勿施於人"]}
+{"id": "al08", "category": "典故出处", "question": "「五十步笑百步」出自哪裡？", "gold_books": ["孟子"], "gold_keywords": ["五十步"]}
+{"id": "al09", "category": "典故出处", "question": "「揠苗助長」出自哪裡？", "gold_books": ["孟子"], "gold_keywords": ["揠苗"]}
+{"id": "al10", "category": "典故出处", "question": "「富貴不能淫」出自哪裡？", "gold_books": ["孟子"], "gold_keywords": ["富貴不能淫"]}
+{"id": "al11", "category": "典故出处", "question": "「生於憂患，死於安樂」出自哪裡？", "gold_books": ["孟子"], "gold_keywords": ["生於憂患", "死於安樂"]}
+{"id": "al12", "category": "典故出处", "question": "「得道者多助，失道者寡助」出自哪裡？", "gold_books": ["孟子"], "gold_keywords": ["得道者多助"]}
+{"id": "al13", "category": "典故出处", "question": "「完璧歸趙」出自哪裡？", "gold_books": ["史記"], "gold_keywords": ["完璧"]}
+{"id": "al14", "category": "典故出处", "question": "屈原投江的典故出自哪裡？", "gold_books": ["史記"], "gold_keywords": ["屈原"]}
+{"id": "al15", "category": "典故出处", "question": "陳勝「鴻鵠之志」出自哪裡？", "gold_books": ["史記"], "gold_keywords": ["鴻鵠之志"]}
+{"id": "al16", "category": "典故出处", "question": "「指鹿為馬」出自哪裡？", "gold_books": ["史記"], "gold_keywords": ["鹿為馬"]}
+{"id": "al17", "category": "典故出处", "question": "「破釜沉舟」出自哪裡？", "gold_books": ["史記"], "gold_keywords": ["破釜"]}
+{"id": "al18", "category": "典故出处", "question": "「臥薪嘗膽」出自哪裡？", "gold_books": ["史記"], "gold_keywords": ["嘗膽"]}
+{"id": "al19", "category": "典故出处", "question": "「望梅止渴」出自哪裡？", "gold_books": ["世說新語"], "gold_keywords": ["大梅林"]}
+{"id": "al20", "category": "典故出处", "question": "「上善若水」出自哪裡？", "gold_books": ["道德經"], "gold_keywords": ["上善若水"]}
+{"id": "cw01", "category": "跨书比较", "question": "《舊唐書》與《新唐書》對安祿山之亂的記載有何差異？", "gold_books": ["舊唐書", "新唐書"], "gold_keywords": ["安祿山"]}
+{"id": "cw02", "category": "跨书比较", "question": "《舊唐書》與《新唐書》對則天皇后的記載有何差異？", "gold_books": ["舊唐書", "新唐書"], "gold_keywords": ["則天"]}
+{"id": "cw03", "category": "跨书比较", "question": "《史記》與《漢書》對韓信生平的記載有何差異？", "gold_books": ["史記", "漢書"], "gold_keywords": ["韓信"]}
+{"id": "cw04", "category": "跨书比较", "question": "《史記》正文與《史記三家注》對五帝本紀開篇黃帝的記載有何差異？", "gold_books": ["史記", "史記三家注"], "gold_keywords": ["黃帝"]}
+{"id": "cw05", "category": "跨书比较", "question": "《魏書》與《北史》對北魏孝文帝的記載有何差異？", "gold_books": ["魏書", "北史"], "gold_keywords": ["孝文"]}
+{"id": "cw06", "category": "跨书比较", "question": "《論語》與《孟子》對「仁」的論述側重有何不同？", "gold_books": ["論語", "孟子"], "gold_keywords": ["仁"]}
+{"id": "cw07", "category": "跨书比较", "question": "孟子的性善論與荀子的性惡論有何不同？", "gold_books": ["孟子", "荀子"], "gold_keywords": ["性善", "性惡"]}
+{"id": "cw08", "category": "跨书比较", "question": "《北齊書》與《北史》對高歡（神武）的記載有何差異？", "gold_books": ["北齊書", "北史"], "gold_keywords": ["神武"]}
+{"id": "cw09", "category": "跨书比较", "question": "《舊唐書》與《新唐書》對貞觀之治的記載有何差異？", "gold_books": ["舊唐書", "新唐書"], "gold_keywords": ["貞觀"]}
+{"id": "cw10", "category": "跨书比较", "question": "道德經的「無為」思想與荀子的治道思想有何不同？", "gold_books": ["道德經", "荀子"], "gold_keywords": ["無為"]}
