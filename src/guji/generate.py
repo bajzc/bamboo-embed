@@ -73,6 +73,10 @@ class AnswerResult:
     hyde_text: str | None = None
     citations: list[tuple[str, str]] = field(default_factory=list)
     quotes: list[str] = field(default_factory=list)
+    retrieved: list[dict] = field(default_factory=list)  # primary search hits, seeded into the turn
+    messages: list[dict] = field(default_factory=list)  # full conversation sent to the composer LLM
+    answer_attempts: list[str] = field(default_factory=list)  # raw text of every attempt, incl. rejected ones
+    attempt_violations: list[tuple[list, list]] = field(default_factory=list)  # (bad_citations, bad_quotes) per attempt
 
 
 class _Registry:
@@ -231,6 +235,8 @@ def answer(
     ]
 
     tool_calls_log: list[ToolCallLog] = []
+    answer_attempts: list[str] = []
+    attempt_violations: list[tuple[list, list]] = []
     max_retries = cfg.generate.retry_on_violation
     attempts = 0
     final_text = ""
@@ -238,13 +244,17 @@ def answer(
     while attempts <= max_retries:
         attempts += 1
         final_text = _converse(client, llm.model, messages, cfg, registry, tool_calls_log)
+        answer_attempts.append(final_text)
         bad_citations, bad_quotes = validate(final_text, registry, cfg.generate.quote_open, cfg.generate.quote_close)
+        attempt_violations.append((bad_citations, bad_quotes))
         if not bad_citations and not bad_quotes:
             return AnswerResult(
                 text=final_text, attempts=attempts, tool_calls=tool_calls_log,
                 hyde_text=primary.hyde_text,
                 citations=extract_citations(final_text),
                 quotes=extract_quotes(final_text, cfg.generate.quote_open, cfg.generate.quote_close),
+                retrieved=seed_rows, messages=list(messages), answer_attempts=answer_attempts,
+                attempt_violations=attempt_violations,
             )
         if attempts > max_retries:
             break
@@ -254,6 +264,8 @@ def answer(
     return AnswerResult(
         text=REFUSAL_NO_CITATION, citation_failure=True, attempts=attempts,
         tool_calls=tool_calls_log, hyde_text=primary.hyde_text,
+        retrieved=seed_rows, messages=list(messages), answer_attempts=answer_attempts,
+        attempt_violations=attempt_violations,
     )
 
 

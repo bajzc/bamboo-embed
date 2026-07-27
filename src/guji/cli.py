@@ -318,11 +318,57 @@ def ask(
     )
 
     if debug:
-        console.rule("debug")
-        if res.hyde_text:
-            console.print(f"[magenta]HyDE:[/] {res.hyde_text[:160]}")
+        console.rule("debug: HyDE")
+        console.print(f"[magenta]HyDE text:[/] {res.hyde_text or '(disabled / empty)'}")
+
+        console.rule("debug: retrieval (seeded search_passages result)")
+        if not res.retrieved:
+            console.print("[yellow](no hits — rejected_by_threshold or empty search)[/]")
+        for i, r in enumerate(res.retrieved, 1):
+            console.print(
+                f"[cyan]{i}.[/] {r['chunk_id']}  《{r['title']}》{r['juan']}  "
+                f"rerank={r['rerank_score']}"
+            )
+            console.print(f"   [green]{r['text_raw'][:120]}[/]")
+
+        if res.messages:
+            console.rule("debug: composer messages")
+            for m in res.messages:
+                role = m.get("role")
+                if role == "system":
+                    console.print(f"[bold]system:[/]\n{m['content']}")
+                elif role == "user":
+                    console.print(f"[bold]user:[/] {m['content']}")
+                elif role == "assistant":
+                    if m.get("content"):
+                        console.print(f"[bold]assistant:[/] {m['content']}")
+                    for tc in m.get("tool_calls") or []:
+                        fn = tc["function"]
+                        console.print(f"[bold]assistant tool_call:[/] {fn['name']}({fn['arguments']})")
+                elif role == "tool":
+                    console.print(f"[dim]tool_result[{m.get('tool_call_id')}]:[/] {m['content'][:2000]}")
+                console.print()
+
+        console.rule("debug: tool calls (beyond the seeded search)")
+        if not res.tool_calls:
+            console.print("[dim](none)[/]")
         for tc in res.tool_calls:
             console.print(f"[blue]tool:[/] {tc.name}({tc.arguments}) -> {len(tc.result)} rows")
+            for r in tc.result[:5]:
+                console.print(f"   {r}")
+
+        console.rule("debug: attempts")
+        for i, text in enumerate(res.answer_attempts, 1):
+            console.print(f"[bold]attempt {i}:[/] {text or '(empty)'}")
+            if i <= len(res.attempt_violations):
+                bad_citations, bad_quotes = res.attempt_violations[i - 1]
+                if not bad_citations and not bad_quotes:
+                    console.print("[green]  -> passed validation[/]")
+                else:
+                    for title, juan, reason in bad_citations:
+                        console.print(f"[red]  -> bad citation:[/] 《{title}》{juan} ({reason})")
+                    for q in bad_quotes:
+                        console.print(f"[red]  -> bad quote (not verbatim in retrieved text_raw):[/] {q[:60]}")
         console.print(f"[dim]attempts: {res.attempts}[/]")
         console.rule("answer")
 
