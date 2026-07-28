@@ -19,12 +19,55 @@ direnv allow          # 首次：加载 flake devShell 并 `uv sync`
 # 或手动： nix develop --command uv sync
 ```
 
-flake 提供 `python311` + `uv` + `ollama-rocm`（AMD GPU 加速，非 `pkgs.ollama` 的纯 CPU 版），
-并设置 `LD_LIBRARY_PATH` 使 manylinux 轮子（`opencc` 等）在 NixOS 上可加载，以及
-`HSA_OVERRIDE_GFX_VERSION` / `ROCR_VISIBLE_DEVICES` 供 ROCm 识别不在官方支持列表内的
-GPU（如 gfx1032 → 伪装为 gfx1030）并选定独显而非核显。所有模型/路径配置只从
-`config.yaml` 读取。若无 AMD GPU，把 flake 里的 `ollama-rocm` 换回 `ollama`（纯 CPU）
+flake 提供 `python311` + `uv` + `ollama-rocm`（AMD GPU 加速，非 `pkgs.ollama` 的纯 CPU 版）+
+`llama-cpp`（Vulkan 后端），并设置 `LD_LIBRARY_PATH` 使 manylinux 轮子（`opencc` 等）在
+NixOS 上可加载，以及 `HSA_OVERRIDE_GFX_VERSION` / `ROCR_VISIBLE_DEVICES` 供 ROCm 识别不在
+官方支持列表内的 GPU（如 gfx1032 → 伪装为 gfx1030）并选定独显而非核显。所有模型/路径配置
+只从 `config.yaml` 读取。若无 AMD GPU，把 flake 里的 `ollama-rocm` 换回 `ollama`（纯 CPU）
 或 `ollama-cuda`（NVIDIA）。
+
+embedding 固定走 **Ollama**（`qwen3-embedding:0.6b`，见下）；`local` profile 的 LLM
+（HyDE + `guji ask` 生成）走 **llama-server**（Vulkan 后端，`llama-cpp.override { vulkanSupport
+= true; }`）——Vulkan 靠系统级 mesa RADV 自动识别显卡，不需要 ROCm 那套 gfx 版本伪装。
+
+```bash
+# 下载模型（一次性，~18GB，IQ4_NL 量化）：
+mkdir -p models
+# 从 https://huggingface.co/unsloth/Qwen3.6-35B-A3B-GGUF （或 ModelScope 镜像）
+# 下载 Qwen3.6-35B-A3B-UD-IQ4_NL.gguf 到 models/
+
+# 启动 llama-server（GPU 卸载 + MoE 专家 CPU 卸载，--n-cpu-moe 按显存占用率现场调）：
+llama-server \
+  --host 127.0.0.1 --port 8080 \
+  --model models/Qwen3.6-35B-A3B-UD-IQ4_NL.gguf \
+  --jinja \
+  --device Vulkan0 \
+  --ctx-size 32768 \
+  --n-gpu-layers 99 \
+  --n-cpu-moe 26 \
+  --flash-attn auto \
+  --cache-type-k q4_0 --cache-type-v q4_0 \
+  --cont-batching \
+  --reasoning off
+```
+
+（`--reasoning off` 取代了文中教程的 `--chat-template-kwargs '{"enable_thinking":false}'`——
+这台机器上装的 llama-server 版本已把后者标记为 deprecated。）
+
+`--n-cpu-moe 26` 是在这台机器上实测调出来的：从 `20` 开始时显存占用率跑到 99.7%
+（10.69/10.72GB，请求中途用 `rocm-smi --showmeminfo vram --showuse` 采样确认），几乎
+没有 KV cache 空间；调到 `26` 后降到 78.4%（8.40/10.72GB），生成速度从 31.9 t/s 降到
+24.5 t/s（`/v1/chat/completions` 响应的 `timings.predicted_per_second`）——仍明显快于
+教程原文 8GB 显存下的 15-20 t/s。换了模型/量化/context 长度后请重新按这个方法调一次。
+
+`--jinja` 是硬性要求（不是文中教程原始命令的一部分）：Phase 4 的 `search_passages` /
+`lookup_char` / `get_context` function calling依赖 GGUF 内置的 chat template，缺了
+`--jinja` 工具调用会静默失效。`--device Vulkan0` 同样是硬性要求——`llama-server
+--list-devices` 在这台机器上会列出两个 Vulkan 设备（`Vulkan0` = 独显 RX 6750 GRE，
+`Vulkan1` = 7900X 核显，通过 RADV 也暴露成了一个可用设备），不显式指定会有卸载分散
+到核显上拖慢速度的风险。`--n-cpu-moe` 没有固定值——从高往低试，边跑请求边用
+`rocm-smi`/`nvtop` 看显存占用，调到 ~80% 左右（留出 KV cache 空间）；这台机器 10GB
+显存比教程原文的 8GB 宽裕，需要 CPU 卸载的专家层数应该比教程的 `33` 少。
 
 ## Phase 1 用法
 

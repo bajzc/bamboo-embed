@@ -1,7 +1,7 @@
 # guji-rag configuration. Code reads models/paths ONLY from here (+ env vars).
 # Dev uses cloud (qwen-max) for the LLM parts (HyDE, later generation); switch to
-# `local` for a fully offline run once a local LLM is pulled in Ollama.
-profile: cloud            # local | cloud
+# `local` for a fully offline run once llama-server is running (see README).
+profile: local            # local | cloud
 
 providers:
   cloud:
@@ -11,8 +11,8 @@ providers:
       api_key_env: DASHSCOPE_API_KEY
   local:
     llm:
-      base_url: http://localhost:11434/v1     # ollama (OpenAI-compatible)
-      model: qwen3.5:9b
+      base_url: http://localhost:8080/v1      # llama-server, Vulkan backend (OpenAI-compatible)
+      model: qwen3.6-35b-a3b                  # informational only — llama-server ignores this
       api_key_env: null
 
 # ⚠️ embedding never participates in profile switching — always local.

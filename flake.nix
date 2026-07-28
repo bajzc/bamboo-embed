@@ -13,7 +13,15 @@
           # ollama-rocm = AMD HIP build (pkgs.ollama is CPU-only). The dev box has a
           # Radeon RX 6750 GRE (gfx1032), which ROCm doesn't officially support, so
           # HSA_OVERRIDE_GFX_VERSION masquerades it as gfx1030 (see shellHook).
-          packages = [ pkgs.python311 pkgs.uv pkgs.git pkgs.ollama-rocm ];
+          # ollama-rocm still serves embeddings; llama-server (Vulkan) serves the local
+          # chat LLM — Vulkan needs no GPU-generation override, RADV auto-detects.
+          packages = [
+            pkgs.python311
+            pkgs.uv
+            pkgs.git
+            pkgs.ollama-rocm
+            (pkgs.llama-cpp.override { vulkanSupport = true; })
+          ];
 
           # uv must use the nix-provided interpreter, never download its own.
           env = {

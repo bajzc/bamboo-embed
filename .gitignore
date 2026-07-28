@@ -20,3 +20,8 @@ data/*.sqlite
 data/passages.jsonl
 data/char_report.json
 # manifest.json and pua_map.json are small + hand-editable -> keep tracked
+
+.vscode
+
+# GGUF model weights (regenerable via download; multi-GB)
+models/
