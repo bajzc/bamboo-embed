@@ -25,3 +25,6 @@ data/char_report.json
 
 # GGUF model weights (regenerable via download; multi-GB)
 models/
+
+# guji release pack output (multi-GB tarballs; published to HF, not committed)
+dist/
