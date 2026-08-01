@@ -3,53 +3,117 @@
 离线可用的中文古籍问答与检索系统：现代汉语提问，检索繁体文言原文，生成带精确出处
 （书名·卷·篇）的可溯源回答。
 
-> **状态：Phase 1–5 全部完成**（语料解析 / 索引 / 检索链路 / 工具层与生成 / 评测）。
+> **后端**：embedding 恒走本地 **Ollama**（`qwen3-embedding:0.6b`，1024 维，与
+> `profile` 无关，跨平台产出相同向量，索引无需重建）。LLM（HyDE + `guji ask` 生成）
+> 由 `config.yaml: profile` 切换——`local` 走本地 **llama-server**（GPU 后端由 Nix
+> flake 按平台自动选：Linux 用 Vulkan，macOS 用 Metal）；`cloud` 走阿里云百炼
+> `qwen-max`。rerank 固定走阿里云百炼 `qwen3-rerank`（无论
+> profile 是 local 还是 cloud），密钥放 `.env`（见 `.env.example`，已 gitignore）。
 
-> **后端：Ollama**（跨平台，替代 spec 的 MLX）。同一 Ollama 模型在 Linux 开发机与
-> macOS 部署机产出相同向量，索引无需重建。embedding 模型 `qwen3-embedding:0.6b`（1024 维）。
-> LLM（HyDE / 生成）与 rerank 开发期走阿里云百炼（`qwen-max` / `qwen3-rerank`），
-> 密钥放 `.env`（见 `.env.example`，已 gitignore）；部署可切本地。
+## 快速开始
 
-## 环境
+前提：已完成一次性搭建（语料抓取/解析/建索引，见下方「环境搭建」「语料处理」「建索引」），
+即 `data/lancedb/` 与 `data/fts.sqlite` 已存在。日常使用只需三步：起 embedding 服务、
+起本地 LLM（若 `profile: local`）、问问题。
 
-开发/运行通过 Nix flake + direnv + uv（纯解析阶段与平台无关，无需 MLX）：
+```bash
+# 0. 进入开发环境（首次会自动 uv sync）
+direnv allow                    # 或: nix develop --command <cmd>
+```
+
+**1) 启动 embedding 服务**（Ollama，`guji search`/`guji ask` 检索阶段必需，与 profile 无关）：
+
+```bash
+ollama serve &
+ollama pull qwen3-embedding:0.6b   # 仅需一次
+```
+
+**2) 启动本地 LLM**（`config.yaml: profile: local` 时，HyDE 与 `guji ask` 生成都走它；
+模型下载与参数调优见下方「环境搭建」）：
+
+```bash
+# Linux（Vulkan，见「环境搭建 › Linux」的 --n-cpu-moe 调参说明）
+llama-server \
+  --host 127.0.0.1 --port 8080 \
+  --model models/Qwen3.6-35B-A3B-UD-IQ4_NL.gguf \
+  --jinja --device Vulkan0 --ctx-size 32768 \
+  --n-gpu-layers 99 --n-cpu-moe 26 \
+  --flash-attn auto --cache-type-k q4_0 --cache-type-v q4_0 \
+  --cont-batching --reasoning off
+```
+
+```bash
+# macOS（Metal，Apple Silicon；见「环境搭建 › macOS」）
+llama-server \
+  --host 127.0.0.1 --port 8080 \
+  --model models/Qwen3.6-35B-A3B-UD-IQ4_NL.gguf \
+  --jinja --ctx-size 32768 \
+  --n-gpu-layers 99 \
+  --flash-attn auto --cache-type-k q4_0 --cache-type-v q4_0 \
+  --cont-batching --reasoning off
+```
+
+若 `profile: cloud`，跳过这一步，改为在 `.env` 中填 `DASHSCOPE_API_KEY`（cloud LLM 走
+`qwen-max`）。**无论哪种 profile，rerank 都需要这把 key**（`qwen3-rerank`，DashScope
+不是 OpenAI 兼容接口，走独立 adapter）；不想配 key 就都加 `--no-rerank`：
+
+```bash
+cp .env.example .env   # 填入 DASHSCOPE_API_KEY
+```
+
+**3) 提问 / 检索**：
+
+```bash
+guji ask "「敝」在《說文》中如何解？"
+guji ask "克己復禮這句話出自哪里？完整地引用原文" --debug   # 显示 HyDE/检索/工具调用/校验轨迹
+guji ask "..." --hyde --validate                          # 开 HyDE 假想文言文 + 引用校验（拒绝并重试一次）
+guji ask "..." --no-rerank                                 # 跳过 rerank，省 DashScope key
+guji ask "..." --book 史記 --dynasty 漢 --category 史書    # 元数据过滤
+```
+
+`--hyde/--no-hyde`、`--validate/--no-validate`、`--rerank/--no-rerank` 不传时读
+`config.yaml`（`hyde.enabled` / `generate.validate_citations` 当前均默认 `false`）。
+回答流式输出；`--debug` 额外打印 HyDE 文本、检索命中、工具调用与每次重试的校验结果。
+
+只检索不生成（更快，不占 LLM）：
+
+```bash
+guji search "克己復禮" --no-rerank
+guji search "克己復禮 是什么意思" --hyde --debug   # --debug 显示各路召回 + HyDE 文本
+```
+
+## 环境搭建
+
+开发/运行通过 Nix flake + direnv + uv（纯解析阶段与平台无关，无需 MLX）。flake 按平台
+（`pkgs.stdenv.isDarwin`）自动切换 GPU 后端——同一份 `flake.nix`、同一条 `direnv allow`
+在 Linux 与 macOS（Apple Silicon）上都能跑，选哪个包不用手动改：
 
 ```bash
 direnv allow          # 首次：加载 flake devShell 并 `uv sync`
 # 或手动： nix develop --command uv sync
 ```
 
-flake 提供 `python311` + `uv` + `ollama-rocm`（AMD GPU 加速，非 `pkgs.ollama` 的纯 CPU 版）+
-`llama-cpp`（Vulkan 后端），并设置 `LD_LIBRARY_PATH` 使 manylinux 轮子（`opencc` 等）在
-NixOS 上可加载，以及 `HSA_OVERRIDE_GFX_VERSION` / `ROCR_VISIBLE_DEVICES` 供 ROCm 识别不在
-官方支持列表内的 GPU（如 gfx1032 → 伪装为 gfx1030）并选定独显而非核显。所有模型/路径配置
-只从 `config.yaml` 读取。若无 AMD GPU，把 flake 里的 `ollama-rocm` 换回 `ollama`（纯 CPU）
-或 `ollama-cuda`（NVIDIA）。
-
-embedding 固定走 **Ollama**（`qwen3-embedding:0.6b`，见下）；`local` profile 的 LLM
-（HyDE + `guji ask` 生成）走 **llama-server**（Vulkan 后端，`llama-cpp.override { vulkanSupport
-= true; }`）——Vulkan 靠系统级 mesa RADV 自动识别显卡，不需要 ROCm 那套 gfx 版本伪装。
+所有模型/路径配置只从 `config.yaml` 读取，与平台无关。
 
 ```bash
-# 下载模型（一次性，~18GB，IQ4_NL 量化）：
+# 下载模型（一次性，~18GB，IQ4_NL 量化；Linux/macOS 通用，同一个 gguf 文件）：
 mkdir -p models
 # 从 https://huggingface.co/unsloth/Qwen3.6-35B-A3B-GGUF （或 ModelScope 镜像）
 # 下载 Qwen3.6-35B-A3B-UD-IQ4_NL.gguf 到 models/
-
-# 启动 llama-server（GPU 卸载 + MoE 专家 CPU 卸载，--n-cpu-moe 按显存占用率现场调）：
-llama-server \
-  --host 127.0.0.1 --port 8080 \
-  --model models/Qwen3.6-35B-A3B-UD-IQ4_NL.gguf \
-  --jinja \
-  --device Vulkan0 \
-  --ctx-size 32768 \
-  --n-gpu-layers 99 \
-  --n-cpu-moe 26 \
-  --flash-attn auto \
-  --cache-type-k q4_0 --cache-type-v q4_0 \
-  --cont-batching \
-  --reasoning off
 ```
+
+### Linux（本项目开发机：AMD GPU）
+
+flake 提供 `python311` + `uv` + `ollama-rocm`（AMD GPU 加速，非 `pkgs.ollama` 的纯 CPU 版）+
+`llama-cpp.override { vulkanSupport = true; }`（Vulkan 后端），并设置 `LD_LIBRARY_PATH`
+使 manylinux 轮子（`opencc` 等）在 NixOS 上可加载，以及 `HSA_OVERRIDE_GFX_VERSION` /
+`ROCR_VISIBLE_DEVICES` 供 ROCm 识别不在官方支持列表内的 GPU（如 gfx1032 → 伪装为
+gfx1030）并选定独显而非核显。Vulkan 靠系统级 mesa RADV 自动识别显卡，不需要 ROCm 那套
+gfx 版本伪装。若无 AMD GPU，把 `flake.nix` 里 Linux 分支的 `pkgs.ollama-rocm` 换成
+`pkgs.ollama`（纯 CPU）或 `pkgs.ollama-cuda`（NVIDIA）。
+
+启动命令见「快速开始」第 2 步的 Linux 版本（GPU 卸载 + MoE 专家 CPU 卸载，`--n-cpu-moe`
+按显存占用率现场调）。
 
 （`--reasoning off` 取代了文中教程的 `--chat-template-kwargs '{"enable_thinking":false}'`——
 这台机器上装的 llama-server 版本已把后者标记为 deprecated。）
@@ -60,7 +124,7 @@ llama-server \
 24.5 t/s（`/v1/chat/completions` 响应的 `timings.predicted_per_second`）——仍明显快于
 教程原文 8GB 显存下的 15-20 t/s。换了模型/量化/context 长度后请重新按这个方法调一次。
 
-`--jinja` 是硬性要求（不是文中教程原始命令的一部分）：Phase 4 的 `search_passages` /
+`--jinja` 是硬性要求（不是文中教程原始命令的一部分）：问答生成用到的 `search_passages` /
 `lookup_char` / `get_context` function calling依赖 GGUF 内置的 chat template，缺了
 `--jinja` 工具调用会静默失效。`--device Vulkan0` 同样是硬性要求——`llama-server
 --list-devices` 在这台机器上会列出两个 Vulkan 设备（`Vulkan0` = 独显 RX 6750 GRE，
@@ -69,7 +133,44 @@ llama-server \
 `rocm-smi`/`nvtop` 看显存占用，调到 ~80% 左右（留出 KV cache 空间）；这台机器 10GB
 显存比教程原文的 8GB 宽裕，需要 CPU 卸载的专家层数应该比教程的 `33` 少。
 
-## Phase 1 用法
+### macOS（Apple Silicon）
+
+flake 按 `pkgs.stdenv.isDarwin` 切到另一套包：Linux 专用的 `ollama-rocm`
+（ROCm/AMD HIP 构建，darwin 上根本无法构建）换成普通 `pkgs.ollama`（nixpkgs 里这个包
+在 darwin 上自带 Metal/Accelerate 加速，不需要额外 flag）；`llama-cpp` 不加
+`vulkanSupport` override，直接用默认构建——nixpkgs 里 `llama-cpp` 的 `metalSupport`
+选项默认就是 `stdenv.hostPlatform.isDarwin`，即 darwin 上默认已经是 Metal 加速版。
+也因此 macOS 分支的 `shellHook` 是空的：不需要 Linux 分支那套
+`LD_LIBRARY_PATH`/`HSA_OVERRIDE_GFX_VERSION` 补丁（manylinux 加载问题、ROCm gfx
+伪装都是 Linux 专属）。
+
+```bash
+# 首次装 Nix（已装可跳过）：
+sh <(curl -L https://nixos.org/nix/install)
+# 之后跟 Linux 一样：
+direnv allow          # 或: nix develop --command uv sync
+```
+
+llama-server 启动命令见「快速开始」第 2 步的 macOS 版本，与 Linux 版本的差异：
+- 不需要 `--device`：Metal 由 llama-cpp 自动检测，不像 Vulkan 那样一台机器可能列出
+  多个设备（独显/核显）需要手动选一个。
+- 不建议默认加 `--n-cpu-moe`：Apple Silicon 是统一内存架构，GPU/CPU 共享同一块
+  RAM，Linux 独显那套「专家卸载到 CPU 省 VRAM」的逻辑不成立——卸载省不下总内存
+  占用，只是把计算挪到较慢的 CPU 上。模型放不进统一内存（OOM 或系统开始疯狂
+  swap）时再考虑加，或者换更小的量化（如 IQ3 系列）。
+- 调优看统一内存压力而非「VRAM」：没有 `rocm-smi`/`nvtop`，用「活动监视器」的
+  内存压力表，或 `sudo powermetrics --samplers gpu_power` 观察 GPU 占用。
+
+**Intel Mac（`x86_64-darwin`）**：本项目锁定的 `nixos-unstable` 已经不再支持
+`x86_64-darwin`（上游从 Nixpkgs 26.11 起改为 Apple Silicon only），所以
+`flake.nix` 的 `systems` 列表里没有它，直接 `nix develop`/`direnv allow` 会失败。
+需要把 flake input 覆盖到还支持它的分支：
+
+```bash
+nix develop --override-input nixpkgs github:NixOS/nixpkgs/nixpkgs-25.05-darwin
+```
+
+## 语料处理
 
 ```bash
 guji fetch              # 1. clone 语料 -> data/raw/chtxt
@@ -82,13 +183,11 @@ guji verify             # 6. 验收：56 书、字数预算 ±2%、无 PUA 残�
 
 `guji -v <cmd>` 开启 DEBUG 日志。
 
-## Phase 2 用法（索引 + 检索）
+## 建索引
 
-需要本地 Ollama 服务与 embedding 模型：
+需要本地 Ollama 服务与 embedding 模型（见「快速开始」第 1 步）：
 
 ```bash
-ollama serve &                       # flake 已提供 ollama
-ollama pull qwen3-embedding:0.6b
 guji embed                           # 全量嵌入 -> data/lancedb（断点续跑；--book/--limit 可选）
 guji index                           # 建 ANN 向量索引 + FTS5 字符 bigram 索引
 guji search "克己復禮" --no-rerank    # 混合检索（RRF），返回带出处的段落
@@ -97,13 +196,13 @@ guji search "克己復禮" --no-rerank    # 混合检索（RRF），返回带出
 `guji embed` 可断点续跑（已嵌入的 chunk 会跳过），M3 上全量约 2–5 小时；开发机可用
 `--book <id>` 或 `--limit N` 只嵌入子集验证。
 
-## Phase 3 用法（检索链路）
+## 检索
 
 完整链路：`query → dense(HyDE 假想文言文) + sparse(bigram) → RRF → rerank(qwen3-rerank)
 → 分数阈值 → 关联书去重`。
 
 ```bash
-cp .env.example .env          # 填入 DASHSCOPE_API_KEY（HyDE LLM + rerank 用）
+cp .env.example .env          # 填入 DASHSCOPE_API_KEY（rerank 必需；HyDE/生成走 cloud profile 时也用它）
 guji search "克己復禮 是什么意思" --hyde --debug          # --debug 显示各路召回 + HyDE 文本
 guji search "..." --book 史記 --dynasty 漢 --category 史書  # 元数据过滤
 guji search "..." --no-rerank                            # 关掉 rerank（走 RRF 顺序）
@@ -113,15 +212,15 @@ guji search "..." --no-rerank                            # 关掉 rerank（走 R
 - `related_to` 书目去重：并行版本（`史記` / `史記三家注`）同一卷/篇的段落会折叠
   （三家注被 集解/索隱/正義 注文主导，文本相似度失效，故以「关联书 + 同卷篇」为准）；
   其余近重复走字符 bigram Jaccard ≥ 0.7。同书内不同段落不折叠。
-- HyDE 默认开（`config.yaml: hyde.enabled`），`--no-hyde` 关闭做 A/B。
+- HyDE 由 `config.yaml: hyde.enabled` 控制（当前默认关），`--hyde/--no-hyde` 覆盖做 A/B。
 
-## Phase 4 用法（工具层与生成）
+## 问答生成
 
 LLM 通过 function calling 使用三个工具（`src/guji/tools.py`）：
 
 | 工具 | 作用 |
 |---|---|
-| `search_passages` | 混合检索叙事文本（复用 Phase 3 的 `hybrid.search`） |
+| `search_passages` | 混合检索叙事文本（复用「检索」一节的 `hybrid.search`） |
 | `lookup_char` | 精确查字书（`dict.sqlite`），字词训诂类问题优先于向量检索 |
 | `get_context` | 沿 `prev_id`/`next_id` 链取某段的前后文 |
 
@@ -130,7 +229,11 @@ guji ask "「敝」在《說文》中如何解？"
 guji ask "克己復禮這句話出自哪里？完整地引用原文" --debug   # --debug 显示工具调用轨迹 + 重试次数
 ```
 
-三条硬约束，**代码层校验，不只是提示词**（`src/guji/generate.py`）：
+回答流式输出（token 到达即打印，含重试轮次），原文引用实时渲染为绿色。
+
+三条硬约束，**代码层校验，不只是提示词**（`src/guji/generate.py`），由
+`config.yaml: generate.validate_citations`（当前默认 `false`）或 `ask --validate/--no-validate`
+开关：
 
 1. **结构化引用**：回答中 `《書名》卷/篇名` 的书名与卷名必须真实存在于本轮已检索到的
    段落（`search_passages`/`get_context`/`lookup_char` 任一工具的结果）中，书名比较做
@@ -138,11 +241,13 @@ guji ask "克己復禮這句話出自哪里？完整地引用原文" --debug   #
    （`generate.retry_on_violation`），仍不通过则返回安全拒答，绝不放行编造的出处。
 2. **逐字回显**：原文引用须用「`『』`」（`generate.quote_open/quote_close`）包裹，且
    与检索结果的 `text_raw` 逐字一致（允许空白差异），不允许改写、增删、简化；CLI 中
-   模型的话与原文引用视觉分离（原文渲染为绿色 blockquote）。
-3. **阈值门禁**：复用 Phase 3 的 rerank 分数阈值——最高分低于阈值时直接返回
+   模型的话与原文引用视觉分离（原文渲染为绿色）。
+3. **阈值门禁**：复用「检索」一节的 rerank 分数阈值——最高分低于阈值时直接返回
    「未檢索到相關記載」，**不调用生成 LLM**（HyDE 仍会跑，因为它属于检索链路而非生成）。
 
-## Phase 5 用法（评测）
+`--no-validate` 跳过以上校验与重试，直接返回模型第一次的回答（不保证可溯源）。
+
+## 评测
 
 `eval/questions.jsonl`：80 条，四类（字词训诂20 / 人物事件30 / 典故出处20 / 跨书比较10）。
 每条附 `gold_books`（书名白名单）+ `gold_keywords`（原文必现关键词），出题前已逐条核对
@@ -178,7 +283,7 @@ guji eval-compare baseline no_rerank no_hyde   # 对比表
 | `data/lancedb/` | LanceDB 向量库（`qwen3-embedding:0.6b`，1024 维，cosine） |
 | `data/fts.sqlite` | FTS5 字符 bigram 稀疏索引 + `meta` 展示字段 |
 
-## 切分规则（§5.4）
+## 切分规则
 
 | 形态 | 规则 |
 |---|---|
@@ -197,6 +302,6 @@ pytest            # 各 parser ≥3 用例，覆盖点名的怪异格式文件
 - 全库 27,865,176 字，65 文件；`史書` 66% + `字書訓詁` 26%。
 - `0.詩詞/` 8 个文件为空；`c.法家 e.墨家 f.雜家 k.醫學` 仅 `.gitkeep`。
 - `康熙字典_p1/p2` 同书分片（合并）；`史記` 与 `史記三家注` 内容重叠（`related_to`，
-  检索层去重待 Phase 3）。
+  检索层按上方「检索」一节的规则去重）。
 - `a.儒家/詩經_symbolic.txt` 为指针桩（`內容見 0.詩詞/…`），标记 `is_stub`，不进 passages。
 - 全库繁体；PUA 私有区字符统一映射（未命中 → `□`）。
