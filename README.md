@@ -18,7 +18,10 @@
 
 ```bash
 # 0. 进入开发环境（首次会自动 uv sync）
+# Linux（Nix flake）：
 direnv allow                    # 或: nix develop --command <cmd>
+# macOS（Homebrew，见下方「环境搭建 › macOS（Homebrew）」）：
+uv sync
 ```
 
 **1) 启动 embedding 服务**（Ollama，`guji search`/`guji ask` 检索阶段必需，与 profile 无关）：
@@ -84,16 +87,17 @@ guji search "克己復禮 是什么意思" --hyde --debug   # --debug 显示各�
 
 ## 环境搭建
 
-开发/运行通过 Nix flake + direnv + uv（纯解析阶段与平台无关，无需 MLX）。flake 按平台
-（`pkgs.stdenv.isDarwin`）自动切换 GPU 后端——同一份 `flake.nix`、同一条 `direnv allow`
-在 Linux 与 macOS（Apple Silicon）上都能跑，选哪个包不用手动改：
+开发/运行分平台（纯解析阶段与平台无关，无需 MLX）：Linux 用 Nix flake + direnv + uv；
+macOS 用 Homebrew + uv（不需要装 Nix）。所有模型/路径配置只从 `config.yaml` 读取，与
+平台无关。
 
 ```bash
+# Linux：
 direnv allow          # 首次：加载 flake devShell 并 `uv sync`
 # 或手动： nix develop --command uv sync
-```
 
-所有模型/路径配置只从 `config.yaml` 读取，与平台无关。
+# macOS：见下方「macOS（Homebrew）」小节
+```
 
 ```bash
 # 下载模型（一次性，~18GB，IQ4_NL 量化；Linux/macOS 通用，同一个 gguf 文件）：
@@ -133,23 +137,27 @@ gfx 版本伪装。若无 AMD GPU，把 `flake.nix` 里 Linux 分支的 `pkgs.ol
 `rocm-smi`/`nvtop` 看显存占用，调到 ~80% 左右（留出 KV cache 空间）；这台机器 10GB
 显存比教程原文的 8GB 宽裕，需要 CPU 卸载的专家层数应该比教程的 `33` 少。
 
-### macOS（Apple Silicon）
+### macOS（Homebrew）
 
-flake 按 `pkgs.stdenv.isDarwin` 切到另一套包：Linux 专用的 `ollama-rocm`
-（ROCm/AMD HIP 构建，darwin 上根本无法构建）换成普通 `pkgs.ollama`（nixpkgs 里这个包
-在 darwin 上自带 Metal/Accelerate 加速，不需要额外 flag）；`llama-cpp` 不加
-`vulkanSupport` override，直接用默认构建——nixpkgs 里 `llama-cpp` 的 `metalSupport`
-选项默认就是 `stdenv.hostPlatform.isDarwin`，即 darwin 上默认已经是 Metal 加速版。
-也因此 macOS 分支的 `shellHook` 是空的：不需要 Linux 分支那套
-`LD_LIBRARY_PATH`/`HSA_OVERRIDE_GFX_VERSION` 补丁（manylinux 加载问题、ROCm gfx
-伪装都是 Linux 专属）。
+不需要装 Nix。直接用 Homebrew 装 Python 3.11、uv、Ollama、llama.cpp——Homebrew 的
+`ollama` 与 `llama.cpp` bottle 在 macOS 上自带 Metal/Accelerate 加速，不需要额外
+编译参数（对应 Linux 分支里 Nix flake 手动切换 `ollama-rocm`/`vulkanSupport` 的部分，
+在 macOS 上是包本身默认就有的行为）：
 
 ```bash
-# 首次装 Nix（已装可跳过）：
-sh <(curl -L https://nixos.org/nix/install)
-# 之后跟 Linux 一样：
-direnv allow          # 或: nix develop --command uv sync
+brew install python@3.11 uv ollama llama.cpp
 ```
+
+固定 uv 使用 Homebrew 装的 3.11 解释器，避免 uv 另外下载一份 Python：
+
+```bash
+export UV_PYTHON="$(brew --prefix python@3.11)/bin/python3.11"
+export UV_PYTHON_DOWNLOADS=never
+uv sync
+```
+
+（这两个环境变量写进 shell rc 长期生效，或者每次 `uv sync` 前手动 export 一次都行；
+不需要 direnv，也不需要 `flake.nix`——那份 flake 只服务 Linux 开发机。）
 
 llama-server 启动命令见「快速开始」第 2 步的 macOS 版本，与 Linux 版本的差异：
 - 不需要 `--device`：Metal 由 llama-cpp 自动检测，不像 Vulkan 那样一台机器可能列出
@@ -161,14 +169,9 @@ llama-server 启动命令见「快速开始」第 2 步的 macOS 版本，与 Li
 - 调优看统一内存压力而非「VRAM」：没有 `rocm-smi`/`nvtop`，用「活动监视器」的
   内存压力表，或 `sudo powermetrics --samplers gpu_power` 观察 GPU 占用。
 
-**Intel Mac（`x86_64-darwin`）**：本项目锁定的 `nixos-unstable` 已经不再支持
-`x86_64-darwin`（上游从 Nixpkgs 26.11 起改为 Apple Silicon only），所以
-`flake.nix` 的 `systems` 列表里没有它，直接 `nix develop`/`direnv allow` 会失败。
-需要把 flake input 覆盖到还支持它的分支：
-
-```bash
-nix develop --override-input nixpkgs github:NixOS/nixpkgs/nixpkgs-25.05-darwin
-```
+Intel Mac（`x86_64`）与 Apple Silicon（`arm64`）Homebrew 都提供原生 bottle，装法不变；
+GPU 加速效果取决于机器实际的 Metal 支持情况（Apple Silicon 上稳定可用，Intel Mac 上
+因显卡型号而异，跑不动就退化成 CPU 推理），其余步骤不变。
 
 ## 语料处理
 

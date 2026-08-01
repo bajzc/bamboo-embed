@@ -11,8 +11,10 @@ providers:
       api_key_env: DASHSCOPE_API_KEY
   local:
     llm:
-      base_url: http://localhost:8080/v1      # llama-server, Vulkan backend (OpenAI-compatible)
-      model: qwen3.6-35b-a3b                  # informational only — llama-server ignores this
+      # base_url: http://localhost:8080/v1    # llama-server, Vulkan backend (OpenAI-compatible)
+      # model: qwen3.6-35b-a3b                # informational only — llama-server ignores this
+      base_url: http://localhost:11434/v1     # Ollama (OpenAI-compatible)
+      model: qwen3:8b                         # small enough for M3 16GB
       api_key_env: null
 
 # ⚠️ embedding never participates in profile switching — always local.
