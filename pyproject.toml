@@ -21,6 +21,7 @@ dependencies = [
 
 [project.optional-dependencies]
 dev = ["pytest>=8"]
+release = ["huggingface_hub>=0.24"]
 
 [project.scripts]
 guji = "guji.cli:app"

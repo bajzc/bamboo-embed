@@ -501,6 +501,80 @@ def eval_cmd(
     log.info("wrote %s", report_path)
 
 
+release_app = typer.Typer(
+    add_completion=False,
+    help="Package/publish/fetch prebuilt artifacts (parsed corpus + vector/FTS index) "
+    "so other users can skip `guji fetch`+`parse`+`embed`+`index`.",
+)
+app.add_typer(release_app, name="release")
+
+
+@release_app.command("pack")
+def release_pack(
+    out_dir: Path = typer.Option(Path("dist"), "--out-dir", help="local dir for the archive + manifest"),
+    label: str = typer.Option(None, "--label", help="archive name suffix, default: today's date (YYYYMMDD)"),
+):
+    """Tar the derived artifacts (passages/dict/lancedb/fts/...) into out-dir/."""
+    from . import release
+
+    cfg = load_config()
+    with Progress(console=console) as prog:
+        task = prog.add_task("packing", total=len(release.ARTIFACTS))
+        result = release.pack(cfg, out_dir, label=label, on_artifact=lambda _k: prog.advance(task))
+    log.info(
+        "wrote %s (%.2f GB) + %s",
+        result.archive_path, result.archive_path.stat().st_size / 1e9, result.manifest_path,
+    )
+    log.info("sha256: %s", result.archive_sha256)
+
+
+@release_app.command("publish")
+def release_publish(
+    repo_id: str = typer.Argument(..., help="HF dataset repo, e.g. yourname/guji-rag-data"),
+    archive: Path = typer.Option(None, "--archive", help="default: newest dist/guji-rag-data-*.tar.gz"),
+    private: bool = typer.Option(False, "--private"),
+):
+    """Upload a packed release (archive + its .manifest.json) to a Hugging Face dataset repo.
+
+    Needs the `release` extra (`uv sync --extra release`) and prior `huggingface-cli login`
+    (or `HF_TOKEN` env var).
+    """
+    from . import release
+
+    a = archive or release.newest_archive(Path("dist"))
+    if a is None:
+        raise typer.BadParameter("no archive found in dist/; run `guji release pack` first")
+    m = release.manifest_path_for(a)
+    if not m.is_file():
+        raise typer.BadParameter(f"missing manifest {m} next to {a}")
+    url = release.publish_to_hub(repo_id, a, m, private=private)
+    log.info("published %s -> %s", a.name, url)
+
+
+@release_app.command("fetch")
+def release_fetch(
+    repo_id: str = typer.Argument(..., help="HF dataset repo, e.g. yourname/guji-rag-data"),
+    label: str = typer.Option(..., "--label", help="release label, e.g. 20260801"),
+    revision: str = typer.Option(None, "--revision", help="HF revision/tag/commit, default: main"),
+    force: bool = typer.Option(False, "--force", help="overwrite existing local artifacts"),
+):
+    """Download a prebuilt release and extract it into data/, skipping parse/embed/index.
+
+    Needs the `release` extra (`uv sync --extra release`). Refuses to run if the local
+    `config.yaml: embedding` model/dim doesn't match the release, or if local artifacts
+    are already present (unless --force).
+    """
+    from . import release
+
+    cfg = load_config()
+    log.info("downloading %s @ %s ...", repo_id, label)
+    archive_path, manifest = release.download_from_hub(repo_id, label, revision)
+    log.info("verifying checksum ...")
+    release.verify_archive(archive_path, manifest)
+    keys = release.extract(cfg, archive_path, manifest, force=force)
+    log.info("extracted %s -> %s/", ", ".join(keys), cfg.paths.data_dir)
+
+
 @app.command(name="eval-compare")
 def eval_compare(labels: list[str] = typer.Argument(..., help="report labels to compare, e.g. baseline no_hyde")):
     """A/B compare eval reports previously written by `guji eval --label ...`."""

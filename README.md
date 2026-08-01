@@ -13,8 +13,9 @@
 ## 快速开始
 
 前提：已完成一次性搭建（语料抓取/解析/建索引，见下方「环境搭建」「语料处理」「建索引」），
-即 `data/lancedb/` 与 `data/fts.sqlite` 已存在。日常使用只需三步：起 embedding 服务、
-起本地 LLM（若 `profile: local`）、问问题。
+即 `data/lancedb/` 与 `data/fts.sqlite` 已存在。这一步很慢（全量 embed 单机 1–5 小时），
+如果有人已经发布过预建产物，直接下载会快得多——见下方「分发预建数据」。日常使用只需三步：
+起 embedding 服务、起本地 LLM（若 `profile: local`）、问问题。
 
 ```bash
 # 0. 进入开发环境（首次会自动 uv sync）
@@ -198,6 +199,46 @@ guji search "克己復禮" --no-rerank    # 混合检索（RRF），返回带出
 
 `guji embed` 可断点续跑（已嵌入的 chunk 会跳过），M3 上全量约 2–5 小时；开发机可用
 `--book <id>` 或 `--limit N` 只嵌入子集验证。
+
+## 分发预建数据
+
+语料解析 + 建索引全程可能要几个小时，没必要让每个使用者都重跑一遍。`guji release`
+把「产物」一节列出的可再生产物（`manifest.json`/`passages.jsonl`/`dict.sqlite`/
+`char_report.json`/`pua_map.json`/`lancedb/`/`fts.sqlite`，不含 `data/raw/` 原始语料
+——那只是上游仓库的一份 clone，用 `guji fetch` 重新拉取即可）打成一个 tar.gz，发布到
+Hugging Face 数据集仓库，其他人下载解压后可以直接 `guji search`/`guji ask`，跳过
+「语料处理」「建索引」两节。
+
+```bash
+uv sync --extra release   # huggingface_hub，仅打包/发布/下载需要，日常问答不需要
+```
+
+**打包**（本地操作，不需要网络/账号）：
+
+```bash
+guji release pack --label 20260801   # 默认 out-dir=dist/，label 默认取今天日期
+# -> dist/guji-rag-data-20260801.tar.gz + dist/guji-rag-data-20260801.manifest.json
+```
+
+manifest 里记了 embedding 模型/维度、chunk 参数、git commit、整包与每个文件的 sha256，
+供下载方在解压前核对兼容性与完整性。
+
+**发布**（需要 `huggingface-cli login` 或 `HF_TOKEN` 环境变量，会创建/更新一个公开的
+HF 数据集仓库——除非加 `--private`）：
+
+```bash
+guji release publish yourname/guji-rag-data   # 默认取 dist/ 下最新的包
+```
+
+**获取**（另一台机器/另一个使用者）：
+
+```bash
+guji release fetch yourname/guji-rag-data --label 20260801
+```
+
+下载后先校验整包 sha256，再检查本地 `config.yaml: embedding` 的模型/维度是否与打包时
+一致（不一致会拒绝解压——向量空间对不上）；解压路径来自打包时的 `config.yaml: paths`，
+落地位置与「产物」一节一致。`data/` 下已有同名产物时默认拒绝覆盖，加 `--force` 覆盖。
 
 ## 检索
 
