@@ -276,22 +276,56 @@ def search(
         console.print(f"   [green]{m.get('text_raw','')[:80]}[/]")
 
 
-def _render_answer(console: Console, text: str, qopen: str, qclose: str) -> None:
-    """Print model prose in the default style; verbatim quotes as a green blockquote."""
-    import re
+class _QuoteStream:
+    """Prints text fragments as they arrive; verbatim `qopen…qclose` spans render green.
 
-    pattern = re.compile(re.escape(qopen) + r"(.*?)" + re.escape(qclose), re.S)
-    pos = 0
-    for m in pattern.finditer(text):
-        before = text[pos:m.start()].strip()
-        if before:
-            console.print(before)
-        quote = m.group(1).strip()
-        console.print(f"  [green]▎{qopen}{quote}{qclose}[/]")
-        pos = m.end()
-    tail = text[pos:].strip()
-    if tail:
-        console.print(tail)
+    Replaces the old buffer-then-print `_render_answer`: with streaming, the full
+    answer text never exists as one string before it needs to be on screen, so quote
+    highlighting has to be done incrementally, fragment by fragment.
+    """
+
+    def __init__(self, console: Console, qopen: str, qclose: str) -> None:
+        self.console = console
+        self.qopen = qopen
+        self.qclose = qclose
+        self._buf = ""
+        self._in_quote = False
+        self._closed = True  # nothing pending until the first feed()
+
+    def feed(self, fragment: str) -> None:
+        self._closed = False
+        self._buf += fragment
+        while True:
+            marker = self.qclose if self._in_quote else self.qopen
+            idx = self._buf.find(marker)
+            if idx == -1:
+                break
+            head, self._buf = self._buf[:idx], self._buf[idx + len(marker):]
+            style = "green" if self._in_quote else None
+            self.console.print(head + marker, style=style, end="", highlight=False, soft_wrap=True)
+            self._in_quote = not self._in_quote
+        # hold back a trailing fragment that could be the start of the next marker
+        # (only matters for multi-character qopen/qclose split across chunks)
+        marker = self.qclose if self._in_quote else self.qopen
+        keep = 0
+        for n in range(min(len(marker) - 1, len(self._buf)), 0, -1):
+            if self._buf.endswith(marker[:n]):
+                keep = n
+                break
+        if len(self._buf) > keep:
+            emit, self._buf = self._buf[:len(self._buf) - keep], self._buf[len(self._buf) - keep:]
+            self.console.print(emit, style="green" if self._in_quote else None,
+                                end="", highlight=False, soft_wrap=True)
+
+    def close(self) -> None:
+        if self._closed:
+            return
+        if self._buf:
+            self.console.print(self._buf, style="green" if self._in_quote else None,
+                                end="", highlight=False, soft_wrap=True)
+            self._buf = ""
+        self.console.print()
+        self._closed = True
 
 
 @app.command()
@@ -313,61 +347,79 @@ def ask(
 
     Structured citations and quoted spans are validated in code against this turn's
     retrieved passages; an unverifiable answer is rejected and retried once (§4.2).
+    Generation streams live as the model produces it (both with and without --debug)
+    instead of waiting for the full pipeline — including any citation-retry rounds —
+    to finish before printing anything.
     """
     from . import generate
 
     cfg = load_config()
-    res = generate.answer(
-        cfg, query, book=book, dynasty=dynasty, category=category,
-        use_hyde=hyde, use_rerank=rerank, validate_answer=validate,
-    )
+    qstream = _QuoteStream(console, cfg.generate.quote_open, cfg.generate.quote_close)
+    state = {"attempts_header_printed": False, "hyde_started": False}
 
-    if debug:
-        console.rule("debug: HyDE")
-        console.print(f"[magenta]HyDE text:[/] {res.hyde_text or '(disabled / empty)'}")
+    def on_event(kind: str, payload: dict) -> None:
+        if kind == "hyde_delta":
+            if debug:
+                if not state["hyde_started"]:
+                    console.rule("debug: HyDE")
+                    console.print("[magenta]HyDE:[/] ", end="")
+                    state["hyde_started"] = True
+                console.print(payload["text"], end="", highlight=False, soft_wrap=True)
 
-        console.rule("debug: retrieval (seeded search_passages result)")
-        if not res.retrieved:
-            console.print("[yellow](no hits — rejected_by_threshold or empty search)[/]")
-        for i, r in enumerate(res.retrieved, 1):
-            console.print(
-                f"[cyan]{i}.[/] {r['chunk_id']}  《{r['title']}》{r['juan']}  "
-                f"rerank={r['rerank_score']}"
-            )
-            console.print(f"   [green]{r['text_raw'][:120]}[/]")
+        elif kind == "retrieval":
+            if debug:
+                if state["hyde_started"]:
+                    console.print()
+                console.rule("debug: retrieval (seeded search_passages result)")
+                rows = payload["rows"]
+                if not rows:
+                    console.print("[yellow](no hits)[/]")
+                for i, r in enumerate(rows, 1):
+                    console.print(
+                        f"[cyan]{i}.[/] {r['chunk_id']}  《{r['title']}》{r['juan']}  "
+                        f"rerank={r['rerank_score']}"
+                    )
+                    console.print(f"   [green]{r['text_raw'][:120]}[/]")
 
-        if res.messages:
-            console.rule("debug: composer messages")
-            for m in res.messages:
-                role = m.get("role")
-                if role == "system":
-                    console.print(f"[bold]system:[/]\n{m['content']}")
-                elif role == "user":
-                    console.print(f"[bold]user:[/] {m['content']}")
-                elif role == "assistant":
-                    if m.get("content"):
-                        console.print(f"[bold]assistant:[/] {m['content']}")
-                    for tc in m.get("tool_calls") or []:
-                        fn = tc["function"]
-                        console.print(f"[bold]assistant tool_call:[/] {fn['name']}({fn['arguments']})")
-                elif role == "tool":
-                    console.print(f"[dim]tool_result[{m.get('tool_call_id')}]:[/] {m['content'][:2000]}")
+        elif kind == "attempt_start":
+            # each attempt is an independent completion, not a continuation of the
+            # previous one — flush/reset the highlighter so quote state doesn't leak
+            # across a citation-retry boundary.
+            state.get("qstream", qstream).close()
+            state["qstream"] = _QuoteStream(console, cfg.generate.quote_open, cfg.generate.quote_close)
+            if debug:
+                if not state["attempts_header_printed"]:
+                    console.rule("debug: generation")
+                    state["attempts_header_printed"] = True
+                else:
+                    console.print()
+                console.print(f"[bold]attempt {payload['index']}:[/] ", end="")
+
+        elif kind == "delta":
+            state.get("qstream", qstream).feed(payload["text"])
+
+        elif kind == "tool_call":
+            if debug:
                 console.print()
+                console.print(f"[blue]tool call:[/] {payload['name']}({payload['arguments']})")
 
-        console.rule("debug: tool calls (beyond the seeded search)")
-        if not res.tool_calls:
-            console.print("[dim](none)[/]")
-        for tc in res.tool_calls:
-            console.print(f"[blue]tool:[/] {tc.name}({tc.arguments}) -> {len(tc.result)} rows")
-            for r in tc.result[:5]:
-                console.print(f"   {r}")
+        elif kind == "tool_result":
+            if debug:
+                if payload.get("error"):
+                    console.print(f"[red]tool error:[/] {payload['error']}")
+                else:
+                    result = payload["result"]
+                    console.print(f"[blue]tool result:[/] {len(result)} rows")
+                    for r in result[:5]:
+                        console.print(f"   {r}")
 
-        console.rule("debug: attempts")
-        for i, text in enumerate(res.answer_attempts, 1):
-            console.print(f"[bold]attempt {i}:[/] {text or '(empty)'}")
-            if i <= len(res.attempt_violations):
-                bad_citations, bad_quotes = res.attempt_violations[i - 1]
-                if not bad_citations and not bad_quotes:
+        elif kind == "attempt_done":
+            state.get("qstream", qstream).close()
+            bad_citations, bad_quotes = payload["bad_citations"], payload["bad_quotes"]
+            if debug:
+                if bad_citations is None:
+                    console.print("[dim]  -> validation skipped (--no-validate)[/]")
+                elif not bad_citations and not bad_quotes:
                     console.print("[green]  -> passed validation[/]")
                 else:
                     for title, juan, reason in bad_citations:
@@ -377,14 +429,23 @@ def ask(
                             console.print(f"[red]  -> bad citation:[/] 《{title}》{juan} ({reason})")
                     for q in bad_quotes:
                         console.print(f"[red]  -> bad quote (not verbatim in retrieved text_raw):[/] {q[:60]}")
-        console.print(f"[dim]attempts: {res.attempts}[/]")
-        console.rule("answer")
+
+        elif kind == "retry":
+            console.print("[dim](citation check failed, regenerating…)[/]")
+
+    res = generate.answer(
+        cfg, query, book=book, dynasty=dynasty, category=category,
+        use_hyde=hyde, use_rerank=rerank, validate_answer=validate,
+        on_event=on_event,
+    )
+    state.get("qstream", qstream).close()
 
     if res.rejected_by_threshold or res.citation_failure:
         console.print(f"[yellow]{res.text}[/]")
         raise typer.Exit(0)
 
-    _render_answer(console, res.text, cfg.generate.quote_open, cfg.generate.quote_close)
+    if debug:
+        console.print(f"[dim]attempts: {res.attempts}[/]")
 
 
 @app.command(name="eval")

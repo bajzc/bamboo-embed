@@ -229,7 +229,9 @@ guji ask "「敝」在《說文》中如何解？"
 guji ask "克己復禮這句話出自哪里？完整地引用原文" --debug   # --debug 显示工具调用轨迹 + 重试次数
 ```
 
-回答流式输出（token 到达即打印，含重试轮次），原文引用实时渲染为绿色。
+回答流式输出（token 到达即打印，含重试轮次），原文引用实时渲染为绿色。模型自己的
+解释、分析用简体中文书写；书名/卷篇与「`『』`」内的逐字引用保留检索结果的原始繁体，
+不转换（系统提示词 `generate._SYSTEM_PROMPT` 规则 6）。
 
 三条硬约束，**代码层校验，不只是提示词**（`src/guji/generate.py`），由
 `config.yaml: generate.validate_citations`（当前默认 `false`）或 `ask --validate/--no-validate`

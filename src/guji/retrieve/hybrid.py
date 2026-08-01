@@ -8,6 +8,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
+from typing import Callable
 
 from ..config import Config
 from ..index import fts, vector
@@ -76,6 +77,7 @@ def search(
     book: str | None = None,
     dynasty: str | None = None,
     category: str | None = None,
+    on_event: Callable[[str, dict], None] | None = None,
 ) -> SearchResult:
     top_k = top_k or cfg.retrieve.top_k
     use_hyde = cfg.hyde.enabled if use_hyde is None else use_hyde
@@ -85,7 +87,7 @@ def search(
     hyde_text = None
     try:
         if use_hyde:
-            hyde_text = hyde.generate(cfg, query)
+            hyde_text = hyde.generate(cfg, query, on_event=on_event)
         qvec = (
             embedder.embed_documents([hyde_text])[0]
             if hyde_text

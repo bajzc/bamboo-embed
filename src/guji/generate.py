@@ -21,11 +21,20 @@ from __future__ import annotations
 import json
 import re
 from dataclasses import dataclass, field
+from typing import Callable
 
 from .config import Config
 from .normalize import to_norm
 from .retrieve import hybrid
 from .tools import TOOL_SCHEMAS, call_tool
+
+# (event_kind, payload) — see generate.answer()'s docstring-adjacent comments below
+# for the event kinds emitted. UI-agnostic on purpose: the CLI supplies the callback.
+OnEvent = Callable[[str, dict], None]
+
+
+def _noop_event(kind: str, payload: dict) -> None:
+    pass
 
 REFUSAL_NO_RETRIEVAL = "未檢索到相關記載"
 REFUSAL_NO_CITATION = "根據目前檢索到的段落，無法給出可驗證引用來源的回答，請換一個問法或提供更多細節。"
@@ -43,8 +52,9 @@ _SYSTEM_PROMPT = """你是專精中國古代典籍的問答助手。你的核心
 3. 若檢索結果不足以回答問題，直接回答「{no_hit}」，不要臆測。
 4. 字詞訓詁類問題優先用 lookup_char 工具查字書，不要用 search_passages。
 5. 檢索命中的段落可能是節選，若需要前後文以判斷語境，使用 get_context 工具。
-6. 全部古籍語料為繁體中文。書名與逐字引用一律使用繁體，與檢索結果的用字保持一致，
-   即使使用者的提問是簡體中文。
+6. 語言：你自己的解釋、分析、結論一律使用簡體中文書寫。但「{qopen}」「{qclose}」內的
+   逐字引用、以及《書名》卷/篇名，必須保留檢索結果中的原始繁體用字，不可轉為簡體或
+   改寫，即使你其餘的回答是簡體中文。
 """
 
 
@@ -254,10 +264,12 @@ def answer(
     use_hyde: bool | None = None,
     use_rerank: bool = True,
     validate_answer: bool | None = None,
+    on_event: OnEvent | None = None,
 ) -> AnswerResult:
+    emit = on_event or _noop_event
     primary = hybrid.search(
         cfg, query, book=book, dynasty=dynasty, category=category,
-        use_hyde=use_hyde, use_rerank=use_rerank,
+        use_hyde=use_hyde, use_rerank=use_rerank, on_event=on_event,
     )
     if primary.rejected_by_threshold or not primary.hits:
         return AnswerResult(text=REFUSAL_NO_RETRIEVAL, rejected_by_threshold=True,
@@ -279,6 +291,7 @@ def answer(
         for h in primary.hits
     ]
     registry.add(seed_rows)
+    emit("retrieval", {"rows": seed_rows})
 
     messages: list[dict] = [
         {"role": "system", "content": _system_prompt(cfg)},
@@ -301,7 +314,11 @@ def answer(
     if not do_validate:
         # skip citation/quote/link validation and the reject-and-retry loop entirely —
         # whatever the model says on its first pass is returned as-is, ungrounded.
-        final_text = _converse(client, llm.model, messages, cfg, registry, tool_calls_log)
+        emit("attempt_start", {"index": 1})
+        final_text = _converse(client, llm.model, messages, cfg, registry, tool_calls_log, on_event)
+        # bad_citations/bad_quotes=None signals "validation skipped" to listeners,
+        # distinct from an empty list (which would mean "validated and passed").
+        emit("attempt_done", {"index": 1, "text": final_text, "bad_citations": None, "bad_quotes": None})
         return AnswerResult(
             text=final_text, attempts=1, tool_calls=tool_calls_log,
             hyde_text=primary.hyde_text,
@@ -316,10 +333,15 @@ def answer(
 
     while attempts <= max_retries:
         attempts += 1
-        final_text = _converse(client, llm.model, messages, cfg, registry, tool_calls_log)
+        emit("attempt_start", {"index": attempts})
+        final_text = _converse(client, llm.model, messages, cfg, registry, tool_calls_log, on_event)
         answer_attempts.append(final_text)
         bad_citations, bad_quotes = validate(final_text, registry, cfg.generate.quote_open, cfg.generate.quote_close)
         attempt_violations.append((bad_citations, bad_quotes))
+        emit("attempt_done", {
+            "index": attempts, "text": final_text,
+            "bad_citations": bad_citations, "bad_quotes": bad_quotes,
+        })
         if not bad_citations and not bad_quotes:
             return AnswerResult(
                 text=final_text, attempts=attempts, tool_calls=tool_calls_log,
@@ -331,6 +353,7 @@ def answer(
             )
         if attempts > max_retries:
             break
+        emit("retry", {"index": attempts})
         messages.append({"role": "assistant", "content": final_text})
         messages.append({"role": "user", "content": _correction_message(bad_citations, bad_quotes, registry)})
 
@@ -343,39 +366,66 @@ def answer(
 
 
 def _converse(client, model: str, messages: list[dict], cfg: Config, registry: _Registry,
-              tool_calls_log: list[ToolCallLog]) -> str:
-    """Run tool-calling rounds until the model returns plain content."""
-    for _ in range(cfg.generate.max_tool_rounds):
-        resp = client.chat.completions.create(
-            model=model, messages=messages, tools=TOOL_SCHEMAS,
-            tool_choice="auto", max_tokens=cfg.generate.max_tokens,
-        )
-        msg = resp.choices[0].message
-        if not msg.tool_calls:
-            return msg.content or ""
+              tool_calls_log: list[ToolCallLog], on_event: OnEvent | None = None) -> str:
+    """Run tool-calling rounds until the model returns plain content.
 
+    Streams each round so callers can render tokens as they're generated; tool-call
+    id/name/arguments arrive fragmented across chunks and are reassembled by index
+    before being dispatched (arguments are only valid JSON once the stream ends).
+    """
+    emit = on_event or _noop_event
+    for _ in range(cfg.generate.max_tool_rounds):
+        stream = client.chat.completions.create(
+            model=model, messages=messages, tools=TOOL_SCHEMAS,
+            tool_choice="auto", max_tokens=cfg.generate.max_tokens, stream=True,
+        )
+        content_parts: list[str] = []
+        tool_calls_acc: dict[int, dict] = {}
+        for chunk in stream:
+            delta = chunk.choices[0].delta
+            if delta.content:
+                content_parts.append(delta.content)
+                emit("delta", {"text": delta.content})
+            for tc in delta.tool_calls or []:
+                acc = tool_calls_acc.setdefault(tc.index, {"id": None, "name": None, "arguments": ""})
+                if tc.id:
+                    acc["id"] = tc.id
+                if tc.function and tc.function.name:
+                    acc["name"] = tc.function.name
+                if tc.function and tc.function.arguments:
+                    acc["arguments"] += tc.function.arguments
+
+        content = "".join(content_parts)
+        if not tool_calls_acc:
+            return content
+
+        tool_calls = [tool_calls_acc[i] for i in sorted(tool_calls_acc)]
         messages.append({
-            "role": "assistant", "content": msg.content or "",
+            "role": "assistant", "content": content or "",
             "tool_calls": [
-                {"id": tc.id, "type": "function",
-                 "function": {"name": tc.function.name, "arguments": tc.function.arguments}}
-                for tc in msg.tool_calls
+                {"id": tc["id"], "type": "function",
+                 "function": {"name": tc["name"], "arguments": tc["arguments"]}}
+                for tc in tool_calls
             ],
         })
-        for tc in msg.tool_calls:
-            args = json.loads(tc.function.arguments or "{}")
+        for tc in tool_calls:
+            name, tc_id = tc["name"], tc["id"]
+            args = json.loads(tc["arguments"] or "{}")
+            emit("tool_call", {"name": name, "arguments": args})
             try:
-                result = call_tool(cfg, tc.function.name, args)
+                result = call_tool(cfg, name, args)
             except Exception as e:  # noqa: BLE001 — surface tool errors to the model, not a crash
                 result = []
-                messages.append({"role": "tool", "tool_call_id": tc.id,
+                messages.append({"role": "tool", "tool_call_id": tc_id,
                                   "content": json.dumps({"error": str(e)}, ensure_ascii=False)})
-                tool_calls_log.append(ToolCallLog(tc.function.name, args, result))
+                tool_calls_log.append(ToolCallLog(name, args, result))
+                emit("tool_result", {"name": name, "result": result, "error": str(e)})
                 continue
             registry.add(result)
-            tool_calls_log.append(ToolCallLog(tc.function.name, args, result))
-            messages.append({"role": "tool", "tool_call_id": tc.id,
+            tool_calls_log.append(ToolCallLog(name, args, result))
+            messages.append({"role": "tool", "tool_call_id": tc_id,
                               "content": json.dumps(result, ensure_ascii=False)})
+            emit("tool_result", {"name": name, "result": result})
 
     # ran out of rounds without a final answer
     return ""

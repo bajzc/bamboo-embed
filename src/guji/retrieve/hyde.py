@@ -7,6 +7,8 @@ that pseudo-document is embedded for the dense path, narrowing the modern-query 
 
 from __future__ import annotations
 
+from typing import Callable
+
 from ..config import Config
 
 _SYSTEM = "你是精通中國古代典籍的學者，熟悉史書、諸子、詩詞的文言文表達。"
@@ -17,14 +19,14 @@ _PROMPT = (
 )
 
 
-def generate(cfg: Config, query: str) -> str:
+def generate(cfg: Config, query: str, on_event: Callable[[str, dict], None] | None = None) -> str:
     from openai import OpenAI
 
     llm = cfg.active_llm()
     # Ollama's OpenAI-compatible endpoint ignores the key but the SDK requires one.
     key = cfg.api_key(llm.api_key_env) or "not-needed"
     client = OpenAI(base_url=llm.base_url, api_key=key)
-    resp = client.chat.completions.create(
+    stream = client.chat.completions.create(
         model=llm.model,
         messages=[
             {"role": "system", "content": _SYSTEM},
@@ -32,5 +34,13 @@ def generate(cfg: Config, query: str) -> str:
         ],
         max_tokens=cfg.hyde.max_tokens,
         temperature=0.3,
+        stream=True,
     )
-    return (resp.choices[0].message.content or "").strip()
+    parts: list[str] = []
+    for chunk in stream:
+        text = chunk.choices[0].delta.content
+        if text:
+            parts.append(text)
+            if on_event:
+                on_event("hyde_delta", {"text": text})
+    return "".join(parts).strip()
