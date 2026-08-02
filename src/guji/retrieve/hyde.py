@@ -9,6 +9,7 @@ from __future__ import annotations
 
 from typing import Callable
 
+from .. import procman
 from ..config import Config
 
 _SYSTEM = "你是精通中國古代典籍的學者，熟悉史書、諸子、詩詞的文言文表達。"
@@ -23,6 +24,7 @@ def generate(cfg: Config, query: str, on_event: Callable[[str, dict], None] | No
     from openai import OpenAI
 
     llm = cfg.active_llm()
+    procman.ensure_llm()
     # Ollama's OpenAI-compatible endpoint ignores the key but the SDK requires one.
     key = cfg.api_key(llm.api_key_env) or "not-needed"
     client = OpenAI(base_url=llm.base_url, api_key=key)

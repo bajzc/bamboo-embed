@@ -38,12 +38,29 @@ class ChunkCfg(BaseModel):
     overlap_paragraphs: int = 1
 
 
+class LaunchCfg(BaseModel):
+    """Spawn-on-demand for a local server process (§ OOM mitigation on 16G machines).
+
+    Opt-in only: leave unset and guji behaves exactly as before (connect to whatever
+    is already listening at base_url, never touching its lifecycle). Set it and guji
+    starts this exact command when base_url isn't already serving, and stops the
+    process it started once it's no longer needed — so the LLM/reranker/embedding
+    servers don't have to sit resident between (or, for LLM/reranker, even within)
+    `guji ask` invocations. See `guji.procman`.
+    """
+
+    command: list[str]
+    health_path: str = "/health"
+    ready_timeout: float = 300.0
+
+
 class EmbeddingCfg(BaseModel):
     backend: str
     model: str
     dim: int
     base_url: str = "http://localhost:11434"
     query_instruct: str = ""
+    launch: LaunchCfg | None = None
 
 
 class RetrieveCfg(BaseModel):
@@ -58,6 +75,7 @@ class LlmCfg(BaseModel):
     base_url: str
     model: str
     api_key_env: str | None = None
+    launch: LaunchCfg | None = None
 
 
 class ProviderCfg(BaseModel):
@@ -70,6 +88,7 @@ class RerankCfg(BaseModel):
     base_url: str = ""
     api_key_env: str | None = None
     threshold: float = 0.35
+    launch: LaunchCfg | None = None
 
 
 class HydeCfg(BaseModel):

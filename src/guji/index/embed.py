@@ -13,6 +13,7 @@ from pathlib import Path
 
 import httpx
 
+from .. import procman
 from . import vector
 
 
@@ -50,6 +51,7 @@ def make_embedder(cfg) -> OllamaEmbedder:
     e = cfg.embedding
     if e.backend != "ollama":
         raise ValueError(f"unsupported embedding backend: {e.backend}")
+    procman.ensure_embedding()
     return OllamaEmbedder(e.base_url, e.model, e.query_instruct)
 
 

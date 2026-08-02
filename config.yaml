@@ -11,11 +11,22 @@ providers:
       api_key_env: DASHSCOPE_API_KEY
   local:
     llm:
-      # base_url: http://localhost:8080/v1    # llama-server, Vulkan backend (OpenAI-compatible)
-      # model: qwen3.6-35b-a3b                # informational only — llama-server ignores this
-      base_url: http://localhost:11434/v1     # Ollama (OpenAI-compatible)
-      model: qwen3:8b                         # small enough for M3 16GB
+      base_url: http://localhost:8080/v1    # llama-server, Vulkan backend (OpenAI-compatible)
+      model: qwen3.6-35b-a3b                # informational only — llama-server ignores this
+      # base_url: http://localhost:11434/v1     # Ollama (OpenAI-compatible)
+      # model: qwen3:8b                         # small enough for M3 16GB
       api_key_env: null
+      # Optional: let guji spawn/stop this llama-server itself instead of you keeping
+      # it resident by hand (avoids OOM on 16G machines when LLM+reranker+embedding
+      # would otherwise all be loaded at once — see README "内存占用" section).
+      # Only starts it if base_url isn't already answering; only stops what it started.
+      launch:
+        command: [llama-server, --host, 127.0.0.1, --port, "8080",
+                  --model, models/Qwen3-8B-IQ4_NL.gguf,
+                  --jinja, --ctx-size, "32768", --n-gpu-layers, "99",
+                  --flash-attn, auto, --cache-type-k, q4_0, --cache-type-v, q4_0,
+                  --cont-batching, --reasoning, "off"]
+        ready_timeout: 300
 
 # ⚠️ embedding never participates in profile switching — always local.
 # Backend is Ollama (cross-platform: identical vectors on Linux dev + macOS deploy),
@@ -27,14 +38,38 @@ embedding:
   dim: 1024
   # instruction prepended to QUERIES only (not documents) — Qwen3-Embedding supports it
   query_instruct: "給定一個關於中國古代典籍的問題，檢索相關的文言原文段落"
+  # Same opt-in spawn-on-demand as providers.local.llm.launch — starts `ollama serve`
+  # if it isn't already up. Not exclusive with the LLM/reranker (see procman.py): the
+  # daemon is lightweight and manages its own model memory, so it's just started once
+  # and left running for the command, no reload cost from interleaving with either.
+  # health_path is "/" (Ollama's root, not "/health" — it has no such endpoint).
+  launch:
+    command: [ollama, serve]
+    health_path: "/"
+    ready_timeout: 60
 # Rerank is a separate cross-encoder call. DashScope's endpoint is NOT OpenAI-compatible,
-# so it has its own adapter (§2.1). `none` = skip rerank (RRF order kept).
+# so it has its own adapter (§2.1). `none` = skip rerank (RRF order kept). `local` talks
+# to its own `llama-server --reranking` process (`guji models fetch reranker` to get the
+# GGUF; see README) — separate port from the LLM's llama-server, no DashScope key needed.
 rerank:
-  backend: dashscope                # dashscope | none
-  model: qwen3-rerank
-  base_url: https://dashscope.aliyuncs.com/api/v1/services/rerank/text-rerank/text-rerank
-  api_key_env: DASHSCOPE_API_KEY
+  backend: local                # dashscope | local | none
+  # model: qwen3-rerank
+  # base_url: https://dashscope.aliyuncs.com/api/v1/services/rerank/text-rerank/text-rerank
+  # api_key_env: DASHSCOPE_API_KEY
+  # local (llama-server --reranking --pooling rank --embedding, its own port):
+  model: qwen3-reranker-0.6b
+  base_url: http://localhost:8081
   threshold: 0.35                   # top rerank score below this -> 未檢索到相關記載
+  # Same opt-in spawn-on-demand as providers.local.llm.launch above, its own port.
+  launch:
+    # -b/-ub above the default 512: a query+passage pair over 512 tokens (common —
+    # passages run 250–400 chars, +query, +chat-template overhead) otherwise 500s
+    # with "input (N tokens) is too large to process" (llama-server, not a guji bug).
+    command: [llama-server, --host, 127.0.0.1, --port, "8081",
+              --model, models/Qwen3-Reranker-0.6B.Q8_0.gguf,
+              --reranking, --pooling, rank, --embedding,
+              --ctx-size, "4096", -b, "4096", -ub, "4096"]
+    ready_timeout: 120
 
 # HyDE: LLM writes a hypothetical 文言文 passage, which is embedded for the dense path
 # to bridge the modern-query vs classical-document gap (§4.1). Toggle with --hyde/--no-hyde.

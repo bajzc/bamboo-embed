@@ -23,6 +23,7 @@ import re
 from dataclasses import dataclass, field
 from typing import Callable
 
+from . import procman
 from .config import Config
 from .normalize import to_norm
 from .retrieve import hybrid
@@ -375,6 +376,7 @@ def _converse(client, model: str, messages: list[dict], cfg: Config, registry: _
     """
     emit = on_event or _noop_event
     for _ in range(cfg.generate.max_tool_rounds):
+        procman.ensure_llm()
         stream = client.chat.completions.create(
             model=model, messages=messages, tools=TOOL_SCHEMAS,
             tool_choice="auto", max_tokens=cfg.generate.max_tokens, stream=True,

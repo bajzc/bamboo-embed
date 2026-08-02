@@ -20,7 +20,8 @@ from rich.progress import (
 )
 from rich.table import Table
 
-from . import charreport, stats
+from . import charreport, procman, stats
+from . import gguf as gguf_models
 from .config import load_config
 from .models import Manifest
 from .parse import dictionary, manifest, narrative, poetry
@@ -204,7 +205,7 @@ def embed(
         TextColumn("eta"),
         TimeRemainingColumn(),
     ]
-    with Progress(*cols, console=console) as prog:
+    with procman.managed_backends(cfg), Progress(*cols, console=console) as prog:
         task = prog.add_task("embedding", total=0)
         already, added = emb.embed_corpus(
             cfg,
@@ -248,10 +249,11 @@ def search(
     from .retrieve import hybrid
 
     cfg = load_config()
-    res = hybrid.search(
-        cfg, query, top_k=top_k, use_hyde=hyde, use_rerank=rerank,
-        book=book, dynasty=dynasty, category=category,
-    )
+    with procman.managed_backends(cfg):
+        res = hybrid.search(
+            cfg, query, top_k=top_k, use_hyde=hyde, use_rerank=rerank,
+            book=book, dynasty=dynasty, category=category,
+        )
 
     if debug:
         console.rule("debug")
@@ -433,11 +435,12 @@ def ask(
         elif kind == "retry":
             console.print("[dim](citation check failed, regenerating…)[/]")
 
-    res = generate.answer(
-        cfg, query, book=book, dynasty=dynasty, category=category,
-        use_hyde=hyde, use_rerank=rerank, validate_answer=validate,
-        on_event=on_event,
-    )
+    with procman.managed_backends(cfg):
+        res = generate.answer(
+            cfg, query, book=book, dynasty=dynasty, category=category,
+            use_hyde=hyde, use_rerank=rerank, validate_answer=validate,
+            on_event=on_event,
+        )
     state.get("qstream", qstream).close()
 
     if res.rejected_by_threshold or res.citation_failure:
@@ -468,7 +471,7 @@ def eval_cmd(
         by_cat_n[q["category"]] = by_cat_n.get(q["category"], 0) + 1
     log.info("evaluating %d questions: %s", len(questions), by_cat_n)
 
-    with Progress(console=console) as prog:
+    with procman.managed_backends(cfg), Progress(console=console) as prog:
         task = prog.add_task("eval", total=len(questions))
         results = []
         for q in questions:
@@ -499,6 +502,46 @@ def eval_cmd(
     table.add_row("[bold]TOTAL", f"[bold]{o['n']}", f"[bold]{o['recall_at_k']:.0%}", f"[bold]{ocite}")
     console.print(table)
     log.info("wrote %s", report_path)
+
+
+models_app = typer.Typer(
+    add_completion=False,
+    help="Fetch GGUF models for local llama-server (LLM + reranker) — no Ollama, no mixing backends.",
+)
+app.add_typer(models_app, name="models")
+
+
+@models_app.command("list")
+def models_list():
+    """Show the model catalog (repo, file, size role)."""
+    table = Table(title="local GGUF model catalog")
+    table.add_column("key")
+    table.add_column("repo_id")
+    table.add_column("filename")
+    table.add_column("description")
+    for key, spec in gguf_models.CATALOG.items():
+        table.add_row(key, spec.repo_id, spec.filename, spec.description)
+    console.print(table)
+
+
+@models_app.command("fetch")
+def models_fetch(
+    which: list[str] = typer.Argument(
+        None, help="catalog key(s) to fetch, e.g. llm-small reranker; omit for all"
+    ),
+    dest: Path = typer.Option(Path("models"), "--dir", help="destination directory"),
+):
+    """Download one or more catalog models into --dir (default: models/)."""
+    keys = which or list(gguf_models.CATALOG)
+    unknown = [k for k in keys if k not in gguf_models.CATALOG]
+    if unknown:
+        raise typer.BadParameter(
+            f"unknown model key(s): {', '.join(unknown)} (choices: {', '.join(gguf_models.CATALOG)})"
+        )
+    for key in keys:
+        log.info("fetching %s (%s) ...", key, gguf_models.CATALOG[key].filename)
+        path = gguf_models.fetch(key, dest)
+        log.info("-> %s", path)
 
 
 release_app = typer.Typer(

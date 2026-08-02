@@ -26,5 +26,8 @@ data/char_report.json
 # GGUF model weights (regenerable via download; multi-GB)
 models/
 
+# spawn-on-demand llama-server logs (see providers.local.llm.launch / rerank.launch)
+.guji/
+
 # guji release pack output (multi-GB tarballs; published to HF, not committed)
 dist/

@@ -7,8 +7,10 @@
 > `profile` 无关，跨平台产出相同向量，索引无需重建）。LLM（HyDE + `guji ask` 生成）
 > 由 `config.yaml: profile` 切换——`local` 走本地 **llama-server**（GPU 后端由 Nix
 > flake 按平台自动选：Linux 用 Vulkan，macOS 用 Metal）；`cloud` 走阿里云百炼
-> `qwen-max`。rerank 固定走阿里云百炼 `qwen3-rerank`（无论
-> profile 是 local 还是 cloud），密钥放 `.env`（见 `.env.example`，已 gitignore）。
+> `qwen-max`。rerank 默认走阿里云百炼 `qwen3-rerank`（`config.yaml: rerank.backend`
+> 设为 `dashscope`），密钥放 `.env`（见 `.env.example`，已 gitignore）；不想依赖
+> DashScope key，设为 `local` 改走另一个独立的 **llama-server --reranking** 进程
+> （模型用 `guji models fetch reranker` 下载，见下方「本地模型（llama-server）」）。
 
 ## 快速开始
 
@@ -58,11 +60,23 @@ llama-server \
 ```
 
 若 `profile: cloud`，跳过这一步，改为在 `.env` 中填 `DASHSCOPE_API_KEY`（cloud LLM 走
-`qwen-max`）。**无论哪种 profile，rerank 都需要这把 key**（`qwen3-rerank`，DashScope
-不是 OpenAI 兼容接口，走独立 adapter）；不想配 key 就都加 `--no-rerank`：
+`qwen-max`）。默认配置下 rerank 也走这把 key（`qwen3-rerank`，DashScope 不是 OpenAI
+兼容接口，走独立 adapter）：
 
 ```bash
 cp .env.example .env   # 填入 DASHSCOPE_API_KEY
+```
+
+不想依赖 DashScope：要么都加 `--no-rerank`（跳过 rerank，检索质量会下降，RRF 排序
+直接生效）；要么把 `config.yaml: rerank.backend` 设为 `local`，起第三个 llama-server
+进程做 reranking（模型 `guji models fetch reranker` 下载，独立端口，与 LLM 的
+llama-server 互不影响）：
+
+```bash
+llama-server \
+  --host 127.0.0.1 --port 8081 \
+  --model models/Qwen3-Reranker-0.6B.Q8_0.gguf \
+  --reranking --pooling rank --embedding
 ```
 
 **3) 提问 / 检索**：
@@ -86,6 +100,16 @@ guji search "克己復禮" --no-rerank
 guji search "克己復禮 是什么意思" --hyde --debug   # --debug 显示各路召回 + HyDE 文本
 ```
 
+### 内存占用：按需启停本地 llama-server（避免 16G OOM）
+
+上面「快速开始」第 2 步是手动起两个常驻 llama-server（LLM + reranker），加上常驻的
+embedding，三者同时占内存——在 16G 统一内存机器上很容易 OOM。可选：在
+`config.yaml` 给 `providers.local.llm` / `rerank` 各加一个 `launch:` 块（示例已写在
+`config.yaml` 里，注释掉了），guji 就会在真正需要时（`guji ask`/`guji search`/
+`guji eval`）按需拉起对应的 `llama-server` 子进程，命令跑完就把自己启动的那个停掉；
+如果 base_url 已经有服务在监听（比如你还是手动起的），guji 不会碰它，也不会去停它。
+纯 opt-in：不加 `launch:` 就是原来的行为，一切不变。日志写在 `.guji/logs/`。
+
 ## 环境搭建
 
 开发/运行分平台（纯解析阶段与平台无关，无需 MLX）：Linux 用 Nix flake + direnv + uv；
@@ -100,12 +124,24 @@ direnv allow          # 首次：加载 flake devShell 并 `uv sync`
 # macOS：见下方「macOS（Homebrew）」小节
 ```
 
+### 本地模型（llama-server）
+
+`guji models fetch` 从 Hugging Face 下载 GGUF，落到 `models/`（Linux/macOS 通用，同一批
+文件）。可选 key：`llm-large`（35B-A3B MoE，~18GB，`profile: local` 主力模型）、
+`llm-small`（8B dense，~4.8GB，16GB 统一内存机器如 M3 用这个）、`reranker`（0.6B
+cross-encoder，配 `rerank.backend: local`）。`guji models list` 看完整目录（repo/文件/
+说明）；不传参数等于全部下载：
+
 ```bash
-# 下载模型（一次性，~18GB，IQ4_NL 量化；Linux/macOS 通用，同一个 gguf 文件）：
-mkdir -p models
-# 从 https://huggingface.co/unsloth/Qwen3.6-35B-A3B-GGUF （或 ModelScope 镜像）
-# 下载 Qwen3.6-35B-A3B-UD-IQ4_NL.gguf 到 models/
+guji models list                       # 看目录
+guji models fetch llm-large            # 单个模型（一次性，~18GB）
+guji models fetch llm-small reranker   # 也可以一次下多个
+guji models fetch                      # 全部下载
 ```
+
+`reranker` 用的是 [Voodisss/Qwen3-Reranker-0.6B-GGUF-llama_cpp](https://huggingface.co/Voodisss/Qwen3-Reranker-0.6B-GGUF-llama_cpp)，
+用官方 `convert_hf_to_gguf.py` 转换——大多数社群转换版本缺 `cls.output.weight`
+tensor，跑 `--reranking` 会得到近似 0 的分数，这个仓库的版本验证过可用。
 
 ### Linux（本项目开发机：AMD GPU）
 
