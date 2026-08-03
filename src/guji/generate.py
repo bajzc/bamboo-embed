@@ -88,6 +88,8 @@ class AnswerResult:
     messages: list[dict] = field(default_factory=list)  # full conversation sent to the composer LLM
     answer_attempts: list[str] = field(default_factory=list)  # raw text of every attempt, incl. rejected ones
     attempt_violations: list[tuple[list, list]] = field(default_factory=list)  # (bad_citations, bad_quotes) per attempt
+    prompt_tokens_max: int = 0  # largest usage.prompt_tokens seen across all LLM calls this turn
+    quote_stats: dict = field(default_factory=dict)  # {"total": n, "verbatim_ok": n} from the first attempt only
 
 
 class _Registry:
@@ -266,9 +268,14 @@ def answer(
     use_rerank: bool = True,
     validate_answer: bool | None = None,
     on_event: OnEvent | None = None,
+    precomputed: hybrid.SearchResult | None = None,
 ) -> AnswerResult:
+    """``precomputed`` lets a caller that already ran ``hybrid.search`` for this exact
+    query (e.g. ``guji eval``, which needs the same primary search for Recall@K) skip
+    doing it again here — same result, one retrieval call instead of two.
+    """
     emit = on_event or _noop_event
-    primary = hybrid.search(
+    primary = precomputed if precomputed is not None else hybrid.search(
         cfg, query, book=book, dynasty=dynasty, category=category,
         use_hyde=use_hyde, use_rerank=use_rerank, on_event=on_event,
     )
@@ -312,11 +319,12 @@ def answer(
     attempt_violations: list[tuple[list, list]] = []
 
     do_validate = cfg.generate.validate_citations if validate_answer is None else validate_answer
+    prompt_tokens_max = 0
     if not do_validate:
         # skip citation/quote/link validation and the reject-and-retry loop entirely —
         # whatever the model says on its first pass is returned as-is, ungrounded.
         emit("attempt_start", {"index": 1})
-        final_text = _converse(client, llm.model, messages, cfg, registry, tool_calls_log, on_event)
+        final_text, ptoks = _converse(client, llm.model, messages, cfg, registry, tool_calls_log, on_event)
         # bad_citations/bad_quotes=None signals "validation skipped" to listeners,
         # distinct from an empty list (which would mean "validated and passed").
         emit("attempt_done", {"index": 1, "text": final_text, "bad_citations": None, "bad_quotes": None})
@@ -326,19 +334,28 @@ def answer(
             citations=extract_citations(final_text),
             quotes=extract_quotes(final_text, cfg.generate.quote_open, cfg.generate.quote_close),
             retrieved=seed_rows, messages=list(messages), answer_attempts=[final_text],
+            prompt_tokens_max=ptoks,
         )
 
     max_retries = cfg.generate.retry_on_violation
     attempts = 0
     final_text = ""
+    quote_stats: dict = {}
 
     while attempts <= max_retries:
         attempts += 1
         emit("attempt_start", {"index": attempts})
-        final_text = _converse(client, llm.model, messages, cfg, registry, tool_calls_log, on_event)
+        final_text, ptoks = _converse(client, llm.model, messages, cfg, registry, tool_calls_log, on_event)
+        prompt_tokens_max = max(prompt_tokens_max, ptoks)
         answer_attempts.append(final_text)
         bad_citations, bad_quotes = validate(final_text, registry, cfg.generate.quote_open, cfg.generate.quote_close)
         attempt_violations.append((bad_citations, bad_quotes))
+        if attempts == 1:
+            # diagnostic only, so always taken from the first attempt regardless of
+            # whether it ultimately passes — retries would hide how much the model
+            # drifted before correction.
+            total_quotes = len(extract_quotes(final_text, cfg.generate.quote_open, cfg.generate.quote_close))
+            quote_stats = {"total": total_quotes, "verbatim_ok": total_quotes - len(bad_quotes)}
         emit("attempt_done", {
             "index": attempts, "text": final_text,
             "bad_citations": bad_citations, "bad_quotes": bad_quotes,
@@ -351,6 +368,7 @@ def answer(
                 quotes=extract_quotes(final_text, cfg.generate.quote_open, cfg.generate.quote_close),
                 retrieved=seed_rows, messages=list(messages), answer_attempts=answer_attempts,
                 attempt_violations=attempt_violations,
+                prompt_tokens_max=prompt_tokens_max, quote_stats=quote_stats,
             )
         if attempts > max_retries:
             break
@@ -363,27 +381,39 @@ def answer(
         tool_calls=tool_calls_log, hyde_text=primary.hyde_text,
         retrieved=seed_rows, messages=list(messages), answer_attempts=answer_attempts,
         attempt_violations=attempt_violations,
+        prompt_tokens_max=prompt_tokens_max, quote_stats=quote_stats,
     )
 
 
 def _converse(client, model: str, messages: list[dict], cfg: Config, registry: _Registry,
-              tool_calls_log: list[ToolCallLog], on_event: OnEvent | None = None) -> str:
+              tool_calls_log: list[ToolCallLog], on_event: OnEvent | None = None) -> tuple[str, int]:
     """Run tool-calling rounds until the model returns plain content.
 
     Streams each round so callers can render tokens as they're generated; tool-call
     id/name/arguments arrive fragmented across chunks and are reassembled by index
     before being dispatched (arguments are only valid JSON once the stream ends).
+
+    Returns ``(content, prompt_tokens_max)`` — the latter is the largest
+    ``usage.prompt_tokens`` seen across every round of this call, requested via
+    ``stream_options={"include_usage": True}`` (the trailing usage-only chunk this
+    produces has an empty ``choices`` list, hence the guard below).
     """
     emit = on_event or _noop_event
+    prompt_tokens_max = 0
     for _ in range(cfg.generate.max_tool_rounds):
         procman.ensure_llm()
         stream = client.chat.completions.create(
             model=model, messages=messages, tools=TOOL_SCHEMAS,
             tool_choice="auto", max_tokens=cfg.generate.max_tokens, stream=True,
+            stream_options={"include_usage": True},
         )
         content_parts: list[str] = []
         tool_calls_acc: dict[int, dict] = {}
         for chunk in stream:
+            if chunk.usage is not None:
+                prompt_tokens_max = max(prompt_tokens_max, chunk.usage.prompt_tokens)
+            if not chunk.choices:
+                continue
             delta = chunk.choices[0].delta
             if delta.content:
                 content_parts.append(delta.content)
@@ -399,7 +429,7 @@ def _converse(client, model: str, messages: list[dict], cfg: Config, registry: _
 
         content = "".join(content_parts)
         if not tool_calls_acc:
-            return content
+            return content, prompt_tokens_max
 
         tool_calls = [tool_calls_acc[i] for i in sorted(tool_calls_acc)]
         messages.append({
@@ -430,4 +460,4 @@ def _converse(client, model: str, messages: list[dict], cfg: Config, registry: _
             emit("tool_result", {"name": name, "result": result})
 
     # ran out of rounds without a final answer
-    return ""
+    return "", prompt_tokens_max

@@ -1,0 +1,132 @@
+{
+  "label": "smoke_cloud",
+  "config": {
+    "top_k": 20,
+    "hyde_enabled": false,
+    "rerank_enabled": true,
+    "rerank_backend": "local",
+    "rerank_threshold": 0.35,
+    "dedup_enabled": true,
+    "validate_citations": true,
+    "profile": "cloud",
+    "llm_model": "qwen-max",
+    "llm_base_url": "https://dashscope.aliyuncs.com/compatible-mode/v1",
+    "llm_launch_command": null,
+    "judge_enabled": true
+  },
+  "summary": {
+    "by_category": {
+      "字词训诂": {
+        "n": 3,
+        "recall_hits": 3,
+        "citation_n": 3,
+        "citation_ok": 3,
+        "recall_at_k": 1.0,
+        "citation_accuracy": 1.0
+      }
+    },
+    "overall": {
+      "n": 3,
+      "recall_hits": 3,
+      "recall_at_k": 1.0,
+      "citation_n": 3,
+      "citation_ok": 3,
+      "citation_accuracy": 1.0
+    },
+    "generation": {
+      "n": 3,
+      "first_pass_rate": 0.6667,
+      "quote_verbatim_rate": null,
+      "violation_counts": {
+        "book_not_found": 2,
+        "juan_not_found": 1
+      },
+      "avg_attempts": 1.333,
+      "rejected_by_threshold_rate": 0.0,
+      "citation_failure_rate": 0.0,
+      "prompt_tokens_p50": 5799,
+      "prompt_tokens_p95": 6215,
+      "prompt_tokens_max": 6215,
+      "explain_score": 3.0,
+      "explain_score_n": 3
+    }
+  },
+  "results": [
+    {
+      "id": "zi01",
+      "category": "字词训诂",
+      "question": "「敝」在《說文解字》中如何解釋？",
+      "gold_books": [
+        "說文解字"
+      ],
+      "gold_keywords": [
+        "敝"
+      ],
+      "recall_hit": true,
+      "recall_hit_rank": 0,
+      "citation_ok": true,
+      "answer_text": "根据《說文解字》的解释，「敝」字的含义如下：\n\n- 敝，毗祭切。敝帗也。一曰敗衣。从攴从㡀，㡀亦聲。\n  - 这里说明了「敝」的基本意思是敝帗（即破旧的布巾）和敗衣（破旧的衣服）。同时，「敝」字在构造上是从「攴」和「㡀」，并且「㡀」也是声旁。\n\n综上所述，《說文解字》中「敝」的意思是破旧的布巾或破旧的衣服。这反映了「敝」的基本含义为破旧、损坏的状态。《說文解字》卷【大徐本】",
+      "rejected": false,
+      "rejected_by_threshold": false,
+      "citation_failure": false,
+      "attempts": 1,
+      "prompt_tokens_max": 5701,
+      "quote_total": 0,
+      "quote_verbatim_ok": 0,
+      "violation_reasons": [],
+      "judge_score": 5
+    },
+    {
+      "id": "zi02",
+      "category": "字词训诂",
+      "question": "「仁」在《說文解字》中如何解釋？",
+      "gold_books": [
+        "說文解字"
+      ],
+      "gold_keywords": [
+        "仁"
+      ],
+      "recall_hit": true,
+      "recall_hit_rank": 0,
+      "citation_ok": true,
+      "answer_text": "根据《說文解字》的解释，「仁」字的意思是：\n\n- 仁，親也。从人二。（《說文解字》【大徐本】）\n\n這意味著「仁」的基本含義是指親近、愛護他人，其構字方式是由「人」和「二」組合而成，表示人與人之間的關係或情感。\n\n另外，《大廣益會玉篇》還提供了更多关于「仁」的描述，指出「仁」涉及施以恩義等多種意義，但由於引用限制，這裡不再詳細列出其他古籍中的相關描述。",
+      "rejected": false,
+      "rejected_by_threshold": false,
+      "citation_failure": false,
+      "attempts": 2,
+      "prompt_tokens_max": 6215,
+      "quote_total": 0,
+      "quote_verbatim_ok": 0,
+      "violation_reasons": [
+        "book_not_found",
+        "book_not_found",
+        "juan_not_found"
+      ],
+      "judge_score": 3
+    },
+    {
+      "id": "zi03",
+      "category": "字词训诂",
+      "question": "「禮」在《大廣益會玉篇》中如何解釋？",
+      "gold_books": [
+        "大廣益會玉篇"
+      ],
+      "gold_keywords": [
+        "禮"
+      ],
+      "recall_hit": true,
+      "recall_hit_rank": 0,
+      "citation_ok": true,
+      "answer_text": "根据《大廣益會玉篇》的解释，「禮」字的注解为：「力底切。體也。理也。」这说明了「禮」的基本含义是行为规范和道理。",
+      "rejected": false,
+      "rejected_by_threshold": false,
+      "citation_failure": false,
+      "attempts": 1,
+      "prompt_tokens_max": 5799,
+      "quote_total": 0,
+      "quote_verbatim_ok": 0,
+      "violation_reasons": [],
+      "judge_score": 1
+    }
+  ]
+}

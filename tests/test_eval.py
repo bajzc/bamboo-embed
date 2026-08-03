@@ -116,5 +116,6 @@ def test_eval_recall_routes_dict_category_to_lookup_char(tmp_path, monkeypatch):
         raise AssertionError("hybrid.search must not be called for 字词训诂")
 
     monkeypatch.setattr("guji.eval.hybrid.search", boom)
-    qr = eval_recall(cfg, q, top_k=20)
+    qr, primary = eval_recall(cfg, q, top_k=20)
     assert qr.recall_hit is True
+    assert primary is None

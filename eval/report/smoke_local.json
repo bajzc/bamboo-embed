@@ -1,0 +1,158 @@
+{
+  "label": "smoke_local",
+  "config": {
+    "top_k": 20,
+    "hyde_enabled": false,
+    "rerank_enabled": true,
+    "rerank_backend": "local",
+    "rerank_threshold": 0.35,
+    "dedup_enabled": true,
+    "validate_citations": true,
+    "profile": "local",
+    "llm_model": "qwen3.6-35b-a3b",
+    "llm_base_url": "http://localhost:8080/v1",
+    "llm_launch_command": [
+      "llama-server",
+      "--host",
+      "127.0.0.1",
+      "--port",
+      "8080",
+      "--model",
+      "models/Qwen3-8B-IQ4_NL.gguf",
+      "--jinja",
+      "--ctx-size",
+      "32768",
+      "--n-gpu-layers",
+      "99",
+      "--flash-attn",
+      "auto",
+      "--cache-type-k",
+      "q4_0",
+      "--cache-type-v",
+      "q4_0",
+      "--cont-batching",
+      "--reasoning",
+      "off"
+    ],
+    "judge_enabled": true
+  },
+  "summary": {
+    "by_category": {
+      "字词训诂": {
+        "n": 3,
+        "recall_hits": 3,
+        "citation_n": 3,
+        "citation_ok": 0,
+        "recall_at_k": 1.0,
+        "citation_accuracy": 0.0
+      }
+    },
+    "overall": {
+      "n": 3,
+      "recall_hits": 3,
+      "recall_at_k": 1.0,
+      "citation_n": 3,
+      "citation_ok": 0,
+      "citation_accuracy": 0.0
+    },
+    "generation": {
+      "n": 3,
+      "first_pass_rate": 0.0,
+      "quote_verbatim_rate": 0.0,
+      "violation_counts": {
+        "book_not_found": 4,
+        "bad_quote": 1
+      },
+      "avg_attempts": 2.0,
+      "rejected_by_threshold_rate": 0.0,
+      "citation_failure_rate": 0.6667,
+      "prompt_tokens_p50": 4832,
+      "prompt_tokens_p95": 5362,
+      "prompt_tokens_max": 5362,
+      "explain_score": 2.0,
+      "explain_score_n": 1
+    }
+  },
+  "results": [
+    {
+      "id": "zi01",
+      "category": "字词训诂",
+      "question": "「敝」在《說文解字》中如何解釋？",
+      "gold_books": [
+        "說文解字"
+      ],
+      "gold_keywords": [
+        "敝"
+      ],
+      "recall_hit": true,
+      "recall_hit_rank": 0,
+      "citation_ok": false,
+      "answer_text": "根據目前檢索到的段落，無法給出可驗證引用來源的回答，請換一個問法或提供更多細節。",
+      "rejected": true,
+      "rejected_by_threshold": false,
+      "citation_failure": true,
+      "attempts": 2,
+      "prompt_tokens_max": 5362,
+      "quote_total": 1,
+      "quote_verbatim_ok": 0,
+      "violation_reasons": [
+        "book_not_found",
+        "book_not_found",
+        "bad_quote"
+      ],
+      "judge_score": null
+    },
+    {
+      "id": "zi02",
+      "category": "字词训诂",
+      "question": "「仁」在《說文解字》中如何解釋？",
+      "gold_books": [
+        "說文解字"
+      ],
+      "gold_keywords": [
+        "仁"
+      ],
+      "recall_hit": true,
+      "recall_hit_rank": 0,
+      "citation_ok": false,
+      "answer_text": "《漢書》卷一百上‧敘傳第七十上提到：\n\n「仁，人心也。」\n\n此為《漢書》中對「仁」的解釋，符合本輪檢索結果中可引用的書目。",
+      "rejected": false,
+      "rejected_by_threshold": false,
+      "citation_failure": false,
+      "attempts": 2,
+      "prompt_tokens_max": 4832,
+      "quote_total": 0,
+      "quote_verbatim_ok": 0,
+      "violation_reasons": [
+        "book_not_found"
+      ],
+      "judge_score": 2
+    },
+    {
+      "id": "zi03",
+      "category": "字词训诂",
+      "question": "「禮」在《大廣益會玉篇》中如何解釋？",
+      "gold_books": [
+        "大廣益會玉篇"
+      ],
+      "gold_keywords": [
+        "禮"
+      ],
+      "recall_hit": true,
+      "recall_hit_rank": 0,
+      "citation_ok": false,
+      "answer_text": "根據目前檢索到的段落，無法給出可驗證引用來源的回答，請換一個問法或提供更多細節。",
+      "rejected": true,
+      "rejected_by_threshold": false,
+      "citation_failure": true,
+      "attempts": 2,
+      "prompt_tokens_max": 4465,
+      "quote_total": 0,
+      "quote_verbatim_ok": 0,
+      "violation_reasons": [
+        "book_not_found"
+      ],
+      "judge_score": null
+    }
+  ]
+}

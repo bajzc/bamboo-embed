@@ -1,0 +1,221 @@
+{
+  "label": "smoke_local2",
+  "config": {
+    "top_k": 20,
+    "hyde_enabled": false,
+    "rerank_enabled": true,
+    "rerank_backend": "local",
+    "rerank_threshold": 0.35,
+    "dedup_enabled": true,
+    "validate_citations": true,
+    "profile": "local",
+    "llm_model": "qwen3.6-35b-a3b",
+    "llm_base_url": "http://localhost:8080/v1",
+    "llm_launch_command": [
+      "llama-server",
+      "--host",
+      "127.0.0.1",
+      "--port",
+      "8080",
+      "--model",
+      "models/Qwen3-8B-IQ4_NL.gguf",
+      "--jinja",
+      "--ctx-size",
+      "32768",
+      "--n-gpu-layers",
+      "99",
+      "--flash-attn",
+      "auto",
+      "--cache-type-k",
+      "q4_0",
+      "--cache-type-v",
+      "q4_0",
+      "--cont-batching",
+      "--reasoning",
+      "off"
+    ],
+    "judge_enabled": true
+  },
+  "summary": {
+    "by_category": {
+      "字词训诂": {
+        "n": 5,
+        "recall_hits": 5,
+        "citation_n": 5,
+        "citation_ok": 0,
+        "recall_at_k": 1.0,
+        "citation_accuracy": 0.0
+      }
+    },
+    "overall": {
+      "n": 5,
+      "recall_hits": 5,
+      "recall_at_k": 1.0,
+      "citation_n": 5,
+      "citation_ok": 0,
+      "citation_accuracy": 0.0
+    },
+    "generation": {
+      "n": 5,
+      "first_pass_rate": 0.0,
+      "quote_verbatim_rate": 0.6667,
+      "violation_counts": {
+        "book_not_found": 17,
+        "bad_quote": 1
+      },
+      "avg_attempts": 2.0,
+      "rejected_by_threshold_rate": 0.0,
+      "citation_failure_rate": 1.0,
+      "prompt_tokens_p50": 4915,
+      "prompt_tokens_p95": 5606,
+      "prompt_tokens_max": 5606,
+      "explain_score": null,
+      "explain_score_n": 0
+    }
+  },
+  "results": [
+    {
+      "id": "zi01",
+      "category": "字词训诂",
+      "question": "「敝」在《說文解字》中如何解釋？",
+      "gold_books": [
+        "說文解字"
+      ],
+      "gold_keywords": [
+        "敝"
+      ],
+      "recall_hit": true,
+      "recall_hit_rank": 0,
+      "citation_ok": false,
+      "answer_text": "根據目前檢索到的段落，無法給出可驗證引用來源的回答，請換一個問法或提供更多細節。",
+      "rejected": true,
+      "rejected_by_threshold": false,
+      "citation_failure": true,
+      "attempts": 2,
+      "prompt_tokens_max": 5540,
+      "quote_total": 1,
+      "quote_verbatim_ok": 0,
+      "violation_reasons": [
+        "book_not_found",
+        "book_not_found",
+        "book_not_found",
+        "book_not_found",
+        "bad_quote"
+      ],
+      "judge_score": null
+    },
+    {
+      "id": "zi02",
+      "category": "字词训诂",
+      "question": "「仁」在《說文解字》中如何解釋？",
+      "gold_books": [
+        "說文解字"
+      ],
+      "gold_keywords": [
+        "仁"
+      ],
+      "recall_hit": true,
+      "recall_hit_rank": 0,
+      "citation_ok": false,
+      "answer_text": "根據目前檢索到的段落，無法給出可驗證引用來源的回答，請換一個問法或提供更多細節。",
+      "rejected": true,
+      "rejected_by_threshold": false,
+      "citation_failure": true,
+      "attempts": 2,
+      "prompt_tokens_max": 4915,
+      "quote_total": 0,
+      "quote_verbatim_ok": 0,
+      "violation_reasons": [
+        "book_not_found",
+        "book_not_found"
+      ],
+      "judge_score": null
+    },
+    {
+      "id": "zi03",
+      "category": "字词训诂",
+      "question": "「禮」在《大廣益會玉篇》中如何解釋？",
+      "gold_books": [
+        "大廣益會玉篇"
+      ],
+      "gold_keywords": [
+        "禮"
+      ],
+      "recall_hit": true,
+      "recall_hit_rank": 0,
+      "citation_ok": false,
+      "answer_text": "根據目前檢索到的段落，無法給出可驗證引用來源的回答，請換一個問法或提供更多細節。",
+      "rejected": true,
+      "rejected_by_threshold": false,
+      "citation_failure": true,
+      "attempts": 2,
+      "prompt_tokens_max": 4465,
+      "quote_total": 0,
+      "quote_verbatim_ok": 0,
+      "violation_reasons": [
+        "book_not_found"
+      ],
+      "judge_score": null
+    },
+    {
+      "id": "zi04",
+      "category": "字词训诂",
+      "question": "「道」在《說文解字》中如何解釋？",
+      "gold_books": [
+        "說文解字"
+      ],
+      "gold_keywords": [
+        "道"
+      ],
+      "recall_hit": true,
+      "recall_hit_rank": 0,
+      "citation_ok": false,
+      "answer_text": "根據目前檢索到的段落，無法給出可驗證引用來源的回答，請換一個問法或提供更多細節。",
+      "rejected": true,
+      "rejected_by_threshold": false,
+      "citation_failure": true,
+      "attempts": 2,
+      "prompt_tokens_max": 4826,
+      "quote_total": 1,
+      "quote_verbatim_ok": 1,
+      "violation_reasons": [
+        "book_not_found",
+        "book_not_found"
+      ],
+      "judge_score": null
+    },
+    {
+      "id": "zi05",
+      "category": "字词训诂",
+      "question": "「德」在《康熙字典》中如何解釋？",
+      "gold_books": [
+        "康熙字典"
+      ],
+      "gold_keywords": [
+        "德"
+      ],
+      "recall_hit": true,
+      "recall_hit_rank": 0,
+      "citation_ok": false,
+      "answer_text": "根據目前檢索到的段落，無法給出可驗證引用來源的回答，請換一個問法或提供更多細節。",
+      "rejected": true,
+      "rejected_by_threshold": false,
+      "citation_failure": true,
+      "attempts": 2,
+      "prompt_tokens_max": 5606,
+      "quote_total": 1,
+      "quote_verbatim_ok": 1,
+      "violation_reasons": [
+        "book_not_found",
+        "book_not_found",
+        "book_not_found",
+        "book_not_found",
+        "book_not_found",
+        "book_not_found",
+        "book_not_found",
+        "book_not_found"
+      ],
+      "judge_score": null
+    }
+  ]
+}

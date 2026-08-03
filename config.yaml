@@ -1,7 +1,7 @@
 # guji-rag configuration. Code reads models/paths ONLY from here (+ env vars).
 # Dev uses cloud (qwen-max) for the LLM parts (HyDE, later generation); switch to
 # `local` for a fully offline run once llama-server is running (see README).
-profile: local            # local | cloud
+profile: cloud            # local | cloud
 
 providers:
   cloud:
@@ -65,10 +65,19 @@ rerank:
     # -b/-ub above the default 512: a query+passage pair over 512 tokens (common —
     # passages run 250–400 chars, +query, +chat-template overhead) otherwise 500s
     # with "input (N tokens) is too large to process" (llama-server, not a guji bug).
+    # A single /v1/rerank call sends up to `retrieve.fuse_k` (50) documents in one
+    # request, and -b/-ub caps the *combined* token count across that whole batch, not
+    # per document — 4096 wasn't enough headroom and 500'd on a real eval question
+    # (observed: 5607 tokens). 8192 was tried and made things worse: it hit a genuine
+    # Metal-backend "Compute error" (ggml_metal_graph_compute backend-in-error-state)
+    # partway through an eval run, which then poisons the backend for every request
+    # after it until the process restarts — a hardware/driver batch-size ceiling on
+    # this GPU, not a context-length problem. 6144 is the current compromise: enough
+    # headroom over the observed 5607-token case without hitting that ceiling.
     command: [llama-server, --host, 127.0.0.1, --port, "8081",
               --model, models/Qwen3-Reranker-0.6B.Q8_0.gguf,
               --reranking, --pooling, rank, --embedding,
-              --ctx-size, "4096", -b, "4096", -ub, "4096"]
+              --ctx-size, "6144", -b, "6144", -ub, "6144"]
     ready_timeout: 120
 
 # HyDE: LLM writes a hypothetical 文言文 passage, which is embedded for the dense path
@@ -123,4 +132,4 @@ generate:
   retry_on_violation: 1
   quote_open: "『"
   quote_close: "』"
-  validate_citations: false   # set false (or `ask --no-validate`) to skip the reject-and-retry gate
+  validate_citations: true   # set false (or `ask --no-validate`) to skip the reject-and-retry gate

@@ -459,6 +459,9 @@ def eval_cmd(
     rerank: bool = typer.Option(True, "--rerank/--no-rerank", help="cross-encoder rerank + threshold gate"),
     hyde: bool = typer.Option(None, "--hyde/--no-hyde", help="default from config"),
     limit: int = typer.Option(0, help="evaluate only the first N questions (0 = all 80)"),
+    judge: bool = typer.Option(
+        False, "--judge", help="blind qwen-max paraphrase-quality judge, 1-5 (spends cloud tokens; off by default)"
+    ),
 ):
     """Phase 5: Recall@K (retrieval) + citation accuracy (generation) over eval/questions.jsonl."""
     from . import eval as evalmod
@@ -472,20 +475,42 @@ def eval_cmd(
     log.info("evaluating %d questions: %s", len(questions), by_cat_n)
 
     with procman.managed_backends(cfg), Progress(console=console) as prog:
-        task = prog.add_task("eval", total=len(questions))
+        # two phases (not interleaved per-question) so the reranker/LLM each stay
+        # loaded for the whole batch instead of swapping every question — see the
+        # docstring on evalmod.run() for why that swapping was crashing llama-server.
+        recall_task = prog.add_task("recall", total=len(questions))
         results = []
+        primaries = []
         for q in questions:
-            qr = evalmod.eval_recall(cfg, q, top_k=top_k, use_rerank=rerank, use_hyde=hyde)
-            if citation:
-                evalmod.eval_citation(cfg, q, qr, use_rerank=rerank, use_hyde=hyde)
+            qr, primary = evalmod.safe_recall(cfg, q, top_k=top_k, use_rerank=rerank, use_hyde=hyde)
+            if qr.error:
+                log.warning("recall failed for %s: %s", qr.id, qr.error)
             results.append(qr)
-            prog.advance(task)
+            primaries.append(primary)
+            prog.advance(recall_task)
+        if citation:
+            citation_task = prog.add_task("citation", total=len(questions))
+            for q, qr, primary in zip(questions, results, primaries):
+                evalmod.safe_citation(
+                    cfg, q, qr, use_rerank=rerank, use_hyde=hyde, judge=judge, precomputed=primary,
+                )
+                if qr.error:
+                    log.warning("citation failed for %s: %s", qr.id, qr.error)
+                prog.advance(citation_task)
 
     summary = evalmod.summarize(results)
+    active_llm = cfg.active_llm()
     snapshot = {
         "top_k": top_k, "hyde_enabled": cfg.hyde.enabled if hyde is None else hyde, "rerank_enabled": rerank,
         "rerank_backend": cfg.rerank.backend if rerank else "none",
         "rerank_threshold": cfg.rerank.threshold, "dedup_enabled": cfg.dedup.enabled,
+        "validate_citations": cfg.generate.validate_citations,
+        # full generation-side provenance, so an A/B label is reproducible from the
+        # report alone without cross-referencing whatever config.yaml looked like at
+        # the time the run happened.
+        "profile": cfg.profile, "llm_model": active_llm.model, "llm_base_url": active_llm.base_url,
+        "llm_launch_command": active_llm.launch.command if active_llm.launch else None,
+        "judge_enabled": judge,
     }
     report_path = evalmod.write_report(cfg, label, results, summary, snapshot)
 
@@ -501,6 +526,27 @@ def eval_cmd(
     ocite = f"{o['citation_accuracy']:.0%}" if o["citation_accuracy"] is not None else "—"
     table.add_row("[bold]TOTAL", f"[bold]{o['n']}", f"[bold]{o['recall_at_k']:.0%}", f"[bold]{ocite}")
     console.print(table)
+
+    g = summary["generation"]
+    if g["n"]:
+        gtable = Table(title="generation diagnostics")
+        gtable.add_column("metric")
+        gtable.add_column("value", justify="right")
+
+        def pct(v: float | None) -> str:
+            return f"{v:.0%}" if v is not None else "—"
+
+        gtable.add_row("first_pass_rate", pct(g["first_pass_rate"]))
+        gtable.add_row("quote_verbatim_rate", pct(g["quote_verbatim_rate"]))
+        gtable.add_row("avg_attempts", f"{g['avg_attempts']:.2f}" if g["avg_attempts"] is not None else "—")
+        gtable.add_row("rejected_by_threshold_rate", pct(g["rejected_by_threshold_rate"]))
+        gtable.add_row("citation_failure_rate", pct(g["citation_failure_rate"]))
+        gtable.add_row("prompt_tokens p50/p95/max", f"{g['prompt_tokens_p50']}/{g['prompt_tokens_p95']}/{g['prompt_tokens_max']}")
+        if g["explain_score_n"]:
+            gtable.add_row("explain_score (judge)", f"{g['explain_score']:.2f} (n={g['explain_score_n']})")
+        for reason, n in sorted(g["violation_counts"].items()):
+            gtable.add_row(f"violations: {reason}", str(n))
+        console.print(gtable)
     log.info("wrote %s", report_path)
 
 
@@ -644,6 +690,30 @@ def eval_compare(labels: list[str] = typer.Argument(..., help="report labels to 
             row += [recall, cite]
         table.add_row(*row)
     console.print(table)
+
+    if any(r["summary"].get("generation", {}).get("n") for _, r in reports):
+        gtable = Table(title="generation diagnostics A/B")
+        gtable.add_column("metric")
+        for label, _ in reports:
+            gtable.add_column(label, justify="right")
+
+        def pct(v) -> str:
+            return f"{v:.0%}" if v is not None else "—"
+
+        rows = [
+            ("first_pass_rate", pct),
+            ("quote_verbatim_rate", pct),
+            ("avg_attempts", lambda v: f"{v:.2f}" if v is not None else "—"),
+            ("rejected_by_threshold_rate", pct),
+            ("citation_failure_rate", pct),
+            ("prompt_tokens_p50", lambda v: str(v) if v is not None else "—"),
+            ("prompt_tokens_p95", lambda v: str(v) if v is not None else "—"),
+            ("prompt_tokens_max", lambda v: str(v) if v is not None else "—"),
+            ("explain_score", lambda v: f"{v:.2f}" if v is not None else "—"),
+        ]
+        for key, fmt in rows:
+            gtable.add_row(key, *[fmt(r["summary"].get("generation", {}).get(key)) for _, r in reports])
+        console.print(gtable)
 
 
 if __name__ == "__main__":
