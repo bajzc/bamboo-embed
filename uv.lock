@@ -112,6 +112,7 @@ version = "0.1.0"
 source = { editable = "." }
 dependencies = [
     { name = "httpx" },
+    { name = "huggingface-hub" },
     { name = "lancedb" },
     { name = "numpy", version = "2.4.6", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.12'" },
     { name = "numpy", version = "2.5.1", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.12'" },
@@ -131,14 +132,11 @@ dependencies = [
 dev = [
     { name = "pytest" },
 ]
-release = [
-    { name = "huggingface-hub" },
-]
 
 [package.metadata]
 requires-dist = [
     { name = "httpx", specifier = ">=0.27" },
-    { name = "huggingface-hub", marker = "extra == 'release'", specifier = ">=0.24" },
+    { name = "huggingface-hub", specifier = ">=0.24" },
     { name = "lancedb", specifier = ">=0.13" },
     { name = "numpy", specifier = ">=1.26" },
     { name = "openai", specifier = ">=1.40" },
@@ -153,7 +151,7 @@ requires-dist = [
     { name = "rich", specifier = ">=13" },
     { name = "typer", specifier = ">=0.12" },
 ]
-provides-extras = ["dev", "release"]
+provides-extras = ["dev"]
 
 [[package]]
 name = "h11"

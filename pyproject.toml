@@ -17,11 +17,11 @@ dependencies = [
     "httpx>=0.27",
     "openai>=1.40",
     "python-dotenv>=1.0",
+    "huggingface_hub>=0.24",
 ]
 
 [project.optional-dependencies]
 dev = ["pytest>=8"]
-release = ["huggingface_hub>=0.24"]
 
 [project.scripts]
 guji = "guji.cli:app"
