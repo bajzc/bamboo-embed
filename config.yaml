@@ -1,7 +1,7 @@
 # guji-rag configuration. Code reads models/paths ONLY from here (+ env vars).
 # Dev uses cloud (qwen-max) for the LLM parts (HyDE, later generation); switch to
 # `local` for a fully offline run once llama-server is running (see README).
-profile: cloud            # local | cloud
+profile: local            # local | cloud
 
 providers:
   cloud:
